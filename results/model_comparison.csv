@@ -1,0 +1,4 @@
+model,best_epoch,val_accuracy,val_f1_macro,val_f1_weighted,val_roc_auc,val_recall_colon_diverticula,val_precision_colon_diverticula,val_f1_colon_diverticula,test_accuracy,test_f1_macro,test_f1_weighted,test_roc_auc,test_recall_colon_diverticula,test_f1_colon_diverticula
+resnet50,4,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+densenet121,15,0.96,0.9322,0.9617,0.9881,1.0,0.8,0.8889,0.9615,0.9328,0.9598,1.0,0.8,0.8889
+efficientnet_b0,17,0.96,0.9322,0.9617,0.9881,1.0,0.8,0.8889,0.9615,0.9328,0.9598,0.9333,0.8,0.8889

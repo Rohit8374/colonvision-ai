@@ -1,0 +1,26 @@
+# ==============================================================================
+# COLONVISION AI — Deployment Requirements (Streamlit Community Cloud & Local)
+# Differential Classification of Colorectal Cancer & Diverticular Disease
+# ==============================================================================
+
+# Web Application User Interface
+streamlit>=1.25.0
+
+# Deep Learning & Neural Network Inference (CPU/GPU)
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Image Processing & Utilities
+Pillow>=9.5.0
+numpy>=1.24.0
+
+# Data Manipulation & Metrics
+pandas>=2.0.0
+scikit-learn>=1.2.0
+
+# Visualization & Colormaps
+matplotlib>=3.7.0
+
+# Clinical PDF Report Generation & Verification
+reportlab>=4.0.0
+pypdf>=3.0.0

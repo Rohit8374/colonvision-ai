@@ -1,0 +1,32 @@
+{
+  "random_seed": 42,
+  "split_ratios": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "total_unique_images_used": 168,
+  "classes": {
+    "colorectal_cancer": {
+      "original_count_incl_duplicates": 139,
+      "unique_images_used": 139,
+      "train": 97,
+      "val": 21,
+      "test": 21
+    },
+    "colon_diverticula": {
+      "original_count_incl_duplicates": 29,
+      "unique_images_used": 29,
+      "train": 20,
+      "val": 4,
+      "test": 5
+    }
+  },
+  "duplicate_handling": {
+    "policy": "Exact MD5 duplicates removed before splitting. Duplicate may not appear in any split.",
+    "duplicates_found": []
+  },
+  "data_leakage_check": "PASSED - all splits verified disjoint by MD5 hash",
+  "augmentation_policy": "No augmentation applied at this stage. Augmentation to be applied to training set ONLY during model training.",
+  "preprocessing_applied": "None. Raw images copied as-is."
+}

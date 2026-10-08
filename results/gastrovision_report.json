@@ -1,0 +1,183 @@
+{
+  "dataset_name": "GastroVision Dataset",
+  "total_images": 8000,
+  "total_classes": 27,
+  "image_formats": {
+    "JPEG": 8000
+  },
+  "corrupted_image_files": 0,
+  "non_image_mac_files": 3,
+  "duplicate_image_groups": 1,
+  "duplicate_images_count": 1,
+  "metadata_files_present": false,
+  "official_splits_present": false,
+  "patient_identifiers_present": false,
+  "target_class_counts": {
+    "colorectal_cancer": 139,
+    "colon_diverticula": 29
+  },
+  "class_breakdown": [
+    {
+      "class_name": "Accessory tools",
+      "image_count": 1266,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Angiectasia",
+      "image_count": 17,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Barrett's esophagus",
+      "image_count": 95,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Blood in lumen",
+      "image_count": 171,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Cecum",
+      "image_count": 113,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Colon diverticula",
+      "image_count": 29,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": true
+    },
+    {
+      "class_name": "Colon polyps",
+      "image_count": 820,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Colorectal cancer",
+      "image_count": 139,
+      "is_colorectal_cancer": true,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Duodenal bulb",
+      "image_count": 205,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Dyed-lifted-polyps",
+      "image_count": 141,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Dyed-resection-margins",
+      "image_count": 246,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Erythema",
+      "image_count": 15,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Esophageal varices",
+      "image_count": 7,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Esophagitis",
+      "image_count": 107,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Gastric polyps",
+      "image_count": 65,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Gastroesophageal_junction_normal z-line",
+      "image_count": 330,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Ileocecal valve",
+      "image_count": 200,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Mucosal inflammation large bowel",
+      "image_count": 29,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Normal esophagus",
+      "image_count": 140,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Normal mucosa and vascular pattern in the large bowel",
+      "image_count": 1467,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Normal stomach",
+      "image_count": 969,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Pylorus",
+      "image_count": 393,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Resected polyps",
+      "image_count": 92,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Resection margins",
+      "image_count": 25,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Retroflex rectum",
+      "image_count": 67,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Small bowel_terminal ileum",
+      "image_count": 846,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    },
+    {
+      "class_name": "Ulcer",
+      "image_count": 6,
+      "is_colorectal_cancer": false,
+      "is_colon_diverticula": false
+    }
+  ]
+}

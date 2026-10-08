@@ -1,0 +1,24 @@
+original_label,sample_count,percentage,organ,classification,is_cancer_candidate,is_diverticular_candidate
+bbps-2-3,1148,10.77,Lower GI,quality-of-mucosal-views,False,False
+polyps,1028,9.64,Lower GI,pathological-findings,False,False
+cecum,1009,9.46,Lower GI,anatomical-landmarks,False,False
+dyed-lifted-polyps,1002,9.4,Lower GI,therapeutic-interventions,False,False
+pylorus,999,9.37,Upper GI,anatomical-landmarks,False,False
+dyed-resection-margins,989,9.28,Lower GI,therapeutic-interventions,False,False
+z-line,932,8.74,Upper GI,anatomical-landmarks,False,False
+retroflex-stomach,764,7.17,Upper GI,anatomical-landmarks,False,False
+bbps-0-1,646,6.06,Lower GI,quality-of-mucosal-views,False,False
+ulcerative-colitis-grade-2,443,4.15,Lower GI,pathological-findings,False,False
+esophagitis-a,403,3.78,Upper GI,pathological-findings,False,False
+retroflex-rectum,391,3.67,Lower GI,anatomical-landmarks,False,False
+esophagitis-b-d,260,2.44,Upper GI,pathological-findings,False,False
+ulcerative-colitis-grade-1,201,1.89,Lower GI,pathological-findings,False,False
+ulcerative-colitis-grade-3,133,1.25,Lower GI,pathological-findings,False,False
+impacted-stool,131,1.23,Lower GI,quality-of-mucosal-views,False,False
+barretts-short-segment,53,0.5,Upper GI,pathological-findings,False,False
+barretts,41,0.38,Upper GI,pathological-findings,False,False
+ulcerative-colitis-grade-0-1,35,0.33,Lower GI,pathological-findings,False,False
+ulcerative-colitis-grade-2-3,28,0.26,Lower GI,pathological-findings,False,False
+ulcerative-colitis-grade-1-2,11,0.1,Lower GI,pathological-findings,False,False
+ileum,9,0.08,Lower GI,anatomical-landmarks,False,False
+hemorrhoids,6,0.06,Lower GI,pathological-findings,False,False

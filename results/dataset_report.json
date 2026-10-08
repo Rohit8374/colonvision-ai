@@ -1,0 +1,275 @@
+{
+  "dataset_name": "HyperKvasir Labeled Images Dataset",
+  "authoritative_source": "C:\\Users\\ganes\\Downloads\\hyper-kvasir-labeled-images\\labeled-images\\image-labels.csv",
+  "total_images_in_csv": 10662,
+  "total_images_on_disk": 10662,
+  "corrupted_images_count": 0,
+  "corrupted_files": [],
+  "duplicate_groups_count": 0,
+  "duplicate_images_count": 0,
+  "total_classes": 23,
+  "organ_distribution": {
+    "Lower GI": 7210,
+    "Upper GI": 3452
+  },
+  "classification_category_distribution": {
+    "anatomical-landmarks": 4104,
+    "pathological-findings": 2642,
+    "therapeutic-interventions": 1991,
+    "quality-of-mucosal-views": 1925
+  },
+  "lower_gi_findings": {
+    "bbps-2-3": 1148,
+    "polyps": 1028,
+    "cecum": 1009,
+    "dyed-lifted-polyps": 1002,
+    "dyed-resection-margins": 989,
+    "bbps-0-1": 646,
+    "ulcerative-colitis-grade-2": 443,
+    "retroflex-rectum": 391,
+    "ulcerative-colitis-grade-1": 201,
+    "ulcerative-colitis-grade-3": 133,
+    "impacted-stool": 131,
+    "ulcerative-colitis-grade-0-1": 35,
+    "ulcerative-colitis-grade-2-3": 28,
+    "ulcerative-colitis-grade-1-2": 11,
+    "ileum": 9,
+    "hemorrhoids": 6
+  },
+  "upper_gi_findings": {
+    "pylorus": 999,
+    "z-line": 932,
+    "retroflex-stomach": 764,
+    "esophagitis-a": 403,
+    "esophagitis-b-d": 260,
+    "barretts-short-segment": 53,
+    "barretts": 41
+  },
+  "image_formats": {
+    "JPEG": 10662
+  },
+  "resolution_statistics": {
+    "min_resolution": "332x352",
+    "max_resolution": "1920x1079",
+    "mean_resolution": "817x685",
+    "most_common_resolutions": [
+      "633x532 (1311 images)",
+      "633x531 (1272 images)",
+      "1349x1071 (838 images)",
+      "1221x1012 (788 images)",
+      "635x548 (686 images)"
+    ]
+  },
+  "class_imbalance_ratio_max_to_min": "191.33:1 (1148:6)",
+  "cancer_classes_detected": [],
+  "diverticular_classes_detected": [],
+  "class_breakdown": [
+    {
+      "original_label": "bbps-2-3",
+      "sample_count": 1148,
+      "percentage": 10.77,
+      "organ": "Lower GI",
+      "classification": "quality-of-mucosal-views",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "polyps",
+      "sample_count": 1028,
+      "percentage": 9.64,
+      "organ": "Lower GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "cecum",
+      "sample_count": 1009,
+      "percentage": 9.46,
+      "organ": "Lower GI",
+      "classification": "anatomical-landmarks",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "dyed-lifted-polyps",
+      "sample_count": 1002,
+      "percentage": 9.4,
+      "organ": "Lower GI",
+      "classification": "therapeutic-interventions",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "pylorus",
+      "sample_count": 999,
+      "percentage": 9.37,
+      "organ": "Upper GI",
+      "classification": "anatomical-landmarks",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "dyed-resection-margins",
+      "sample_count": 989,
+      "percentage": 9.28,
+      "organ": "Lower GI",
+      "classification": "therapeutic-interventions",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "z-line",
+      "sample_count": 932,
+      "percentage": 8.74,
+      "organ": "Upper GI",
+      "classification": "anatomical-landmarks",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "retroflex-stomach",
+      "sample_count": 764,
+      "percentage": 7.17,
+      "organ": "Upper GI",
+      "classification": "anatomical-landmarks",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "bbps-0-1",
+      "sample_count": 646,
+      "percentage": 6.06,
+      "organ": "Lower GI",
+      "classification": "quality-of-mucosal-views",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "ulcerative-colitis-grade-2",
+      "sample_count": 443,
+      "percentage": 4.15,
+      "organ": "Lower GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "esophagitis-a",
+      "sample_count": 403,
+      "percentage": 3.78,
+      "organ": "Upper GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "retroflex-rectum",
+      "sample_count": 391,
+      "percentage": 3.67,
+      "organ": "Lower GI",
+      "classification": "anatomical-landmarks",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "esophagitis-b-d",
+      "sample_count": 260,
+      "percentage": 2.44,
+      "organ": "Upper GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "ulcerative-colitis-grade-1",
+      "sample_count": 201,
+      "percentage": 1.89,
+      "organ": "Lower GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "ulcerative-colitis-grade-3",
+      "sample_count": 133,
+      "percentage": 1.25,
+      "organ": "Lower GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "impacted-stool",
+      "sample_count": 131,
+      "percentage": 1.23,
+      "organ": "Lower GI",
+      "classification": "quality-of-mucosal-views",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "barretts-short-segment",
+      "sample_count": 53,
+      "percentage": 0.5,
+      "organ": "Upper GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "barretts",
+      "sample_count": 41,
+      "percentage": 0.38,
+      "organ": "Upper GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "ulcerative-colitis-grade-0-1",
+      "sample_count": 35,
+      "percentage": 0.33,
+      "organ": "Lower GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "ulcerative-colitis-grade-2-3",
+      "sample_count": 28,
+      "percentage": 0.26,
+      "organ": "Lower GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "ulcerative-colitis-grade-1-2",
+      "sample_count": 11,
+      "percentage": 0.1,
+      "organ": "Lower GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "ileum",
+      "sample_count": 9,
+      "percentage": 0.08,
+      "organ": "Lower GI",
+      "classification": "anatomical-landmarks",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    },
+    {
+      "original_label": "hemorrhoids",
+      "sample_count": 6,
+      "percentage": 0.06,
+      "organ": "Lower GI",
+      "classification": "pathological-findings",
+      "is_cancer_candidate": false,
+      "is_diverticular_candidate": false
+    }
+  ]
+}

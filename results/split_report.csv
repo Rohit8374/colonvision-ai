@@ -1,0 +1,7 @@
+split,class,image_count,percentage
+train,colorectal_cancer,97,57.74
+train,colon_diverticula,20,11.9
+val,colorectal_cancer,21,12.5
+val,colon_diverticula,4,2.38
+test,colorectal_cancer,21,12.5
+test,colon_diverticula,5,2.98

@@ -1,0 +1,78 @@
+# ==============================================================================
+# COLONVISION AI — Git Ignore Configuration for Streamlit Cloud & GitHub
+# ==============================================================================
+
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+ENV*/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Secrets & Local Configurations
+.env
+.env.*
+.streamlit/secrets.toml
+secrets.toml
+*.pem
+*.key
+
+# Dataset Protection (GastroVision raw and processed datasets remain local)
+data/raw/
+data/processed/
+data/splits/
+data/*.zip
+
+# Generated Heavy Research Artifacts & Figures (Excluded from Public Deployment)
+results/gradcam/
+results/figures/
+results/confusion_matrices/
+results/roc_curves/
+results/training_curves/
+results/cross_validation/figures/
+
+# Model Checkpoints:
+# KEEP specific verified deployment models (under 100MB GitHub limit)
+# models/resnet50_best.pth (94.4 MB)
+# models/densenet121_best.pth (28.4 MB)
+# models/efficientnet_b0_best.pth (16.3 MB)
+# models/endoscopy_validator_profile.json (61 KB)
+# Ignore any other untracked weights or checkpoint formats:
+*.pt
+*.ckpt
+models/*.pt
+models/*.ckpt
+
+# Jupyter Notebook & Editor Checkpoints
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.temp

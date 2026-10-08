@@ -1,0 +1,70 @@
+{
+  "dataset": {
+    "name": "GastroVision Development Pool",
+    "total_dev_images": 142,
+    "colorectal_cancer_count": 118,
+    "colon_diverticula_count": 24,
+    "held_out_final_test_count": 26,
+    "n_splits": 5,
+    "stratified": true,
+    "shuffle": true,
+    "random_state": 42
+  },
+  "models": [
+    "resnet50",
+    "densenet121",
+    "efficientnet_b0"
+  ],
+  "hyperparameters": {
+    "img_size": 224,
+    "batch_size": 16,
+    "head_lr": 0.001,
+    "fine_tune_lr": 0.0001,
+    "weight_decay": 0.0001,
+    "optimizer": "AdamW",
+    "loss": "Class-Weighted CrossEntropyLoss"
+  },
+  "fold_counts": [
+    {
+      "total": 29,
+      "colon_diverticula": 5,
+      "colorectal_cancer": 24
+    },
+    {
+      "total": 29,
+      "colon_diverticula": 5,
+      "colorectal_cancer": 24
+    },
+    {
+      "total": 28,
+      "colon_diverticula": 5,
+      "colorectal_cancer": 23
+    },
+    {
+      "total": 28,
+      "colon_diverticula": 5,
+      "colorectal_cancer": 23
+    },
+    {
+      "total": 28,
+      "colon_diverticula": 4,
+      "colorectal_cancer": 24
+    }
+  ],
+  "near_duplicates_found": [
+    {
+      "img1": "56289831-a722-4541-bca3-0ec2a23d3996.jpg",
+      "img2": "CyQLV80Q.jpg",
+      "distance": 0,
+      "class1": "colon_diverticula",
+      "class2": "colon_diverticula"
+    },
+    {
+      "img1": "8ec0680a-734e-4af6-a052-f133126f4ce6.jpg",
+      "img2": "ckcblq99h0bzq0y4hddj432v9.jpg",
+      "distance": 0,
+      "class1": "colorectal_cancer",
+      "class2": "colorectal_cancer"
+    }
+  ]
+}
