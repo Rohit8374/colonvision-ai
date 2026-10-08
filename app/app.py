@@ -54,21 +54,22 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
     :root {
-        --cv-bg: #F5F3EE;
-        --cv-surface: #FFFFFF;
-        --cv-surface-muted: #EEECE6;
-        --cv-text: #1C1F1D;
-        --cv-text-sec: #5E6561;
-        --cv-border: #DCDFD9;
-        --cv-primary: #1A4D3E;
-        --cv-primary-dark: #12362C;
-        --cv-primary-light: #E4EDE8;
-        --cv-sage: #7A9486;
-        --cv-success: #2A6B52;
-        --cv-warning: #8F6A2F;
-        --cv-error: #8F3D3D;
-        --cv-viewer: #121514;
-        --cv-viewer-alt: #1A1F1C;
+        --cv-bg: #F8F9F8;              /* warm ivory / off-white */
+        --cv-surface: #FFFFFF;         /* clean white */
+        --cv-surface-muted: #EFF3F0;   /* subtle muted clinical tint */
+        --cv-text: #111816;            /* deep charcoal / near-black */
+        --cv-text-sec: #43544C;        /* medium slate gray (high contrast >5.8:1) */
+        --cv-border: #D5DDD8;          /* crisp thin border */
+        --cv-border-light: #E4EBE7;    /* light divider */
+        --cv-primary: #154536;         /* deep forest green */
+        --cv-primary-dark: #0D2D23;    /* very dark forest green */
+        --cv-primary-light: #E1EBE5;   /* refined forest tint */
+        --cv-sage: #3D705C;            /* muted sage / emerald accent */
+        --cv-success: #176346;         /* medical green */
+        --cv-warning: #855514;         /* dark amber */
+        --cv-error: #932828;           /* medical crimson */
+        --cv-viewer: #0E1210;          /* very dark charcoal / black */
+        --cv-viewer-alt: #161D1A;      /* dark charcoal border */
     }
 
     html, body, [class*="css"] {
@@ -279,13 +280,14 @@ st.markdown("""
         align-items: center;
         background: var(--cv-surface);
         border: 1px solid var(--cv-border);
-        border-radius: 3px;
-        padding: 0.55rem 1.05rem;
+        border-radius: 4px;
+        padding: 0.6rem 1.15rem;
         margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(17, 24, 22, 0.03);
     }
-    .cv-header-left { display: flex; flex-direction: column; gap: 0.1rem; }
+    .cv-header-left { display: flex; flex-direction: column; gap: 0.15rem; }
     .cv-header-brand {
-        font-size: 13px;
+        font-size: 13.5px;
         font-weight: 700;
         letter-spacing: 0.1em;
         color: var(--cv-primary);
@@ -294,7 +296,7 @@ st.markdown("""
     .cv-header-sub {
         font-size: 11px;
         color: var(--cv-text-sec);
-        font-weight: 400;
+        font-weight: 500;
     }
     .cv-header-right {
         display: flex;
@@ -302,6 +304,12 @@ st.markdown("""
         gap: 0.75rem;
         font-size: 12px;
         color: var(--cv-text-sec);
+    }
+    .cv-header-tag {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--cv-text-sec);
+        letter-spacing: 0.02em;
     }
     .cv-status-pill {
         display: inline-flex;
@@ -311,9 +319,23 @@ st.markdown("""
         color: var(--cv-primary);
         font-size: 11px;
         font-weight: 600;
-        padding: 0.2rem 0.55rem;
+        padding: 0.22rem 0.6rem;
         border-radius: 3px;
+        border: 1px solid #CAD6CF;
         letter-spacing: 0.03em;
+    }
+    .cv-model-pill {
+        display: inline-flex;
+        align-items: center;
+        background: var(--cv-surface-muted);
+        color: var(--cv-text);
+        font-size: 11px;
+        font-weight: 600;
+        padding: 0.22rem 0.6rem;
+        border-radius: 3px;
+        border: 1px solid var(--cv-border);
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+        letter-spacing: 0.02em;
     }
     .cv-dot {
         width: 6px;
@@ -329,16 +351,17 @@ st.markdown("""
     .cv-card {
         background: var(--cv-surface);
         border: 1px solid var(--cv-border);
-        border-radius: 3px;
-        padding: 0.95rem 1.05rem;
+        border-radius: 4px;
+        padding: 0.95rem 1.1rem;
         margin-bottom: 0.9rem;
+        box-shadow: 0 1px 3px rgba(17, 24, 22, 0.03);
     }
     .cv-section-label {
-        font-size: 11px;
+        font-size: 11.5px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        color: var(--cv-primary);
+        color: var(--cv-primary) !important;
         margin-bottom: 0.35rem;
     }
     .cv-section-desc {
@@ -352,7 +375,7 @@ st.markdown("""
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.09em;
-        color: var(--cv-primary);
+        color: var(--cv-primary) !important;
         margin-bottom: 0.65rem;
         display: flex;
         justify-content: space-between;
@@ -360,19 +383,22 @@ st.markdown("""
         border-bottom: 1px solid var(--cv-surface-muted);
         padding-bottom: 0.4rem;
     }
+    .cv-card-title span {
+        color: var(--cv-primary) !important;
+    }
     .cv-micro {
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        color: var(--cv-text-sec);
+        color: var(--cv-primary) !important;
     }
 
     /* ── Dark Medical Viewer ── */
     .cv-viewer {
         background: var(--cv-viewer);
         border: 1px solid var(--cv-viewer-alt);
-        border-radius: 2px;
+        border-radius: 3px;
         padding: 0.75rem;
         display: flex;
         justify-content: center;
@@ -388,12 +414,12 @@ st.markdown("""
         font-weight: 700;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #8A938C;
+        color: #D5DDD8;
         margin-bottom: 0.45rem;
     }
     .cv-viewer-empty-desc {
         font-size: 13px;
-        color: #5E6862;
+        color: #9AB2A6;
         line-height: 1.4;
     }
 
@@ -614,7 +640,8 @@ st.markdown("""
     }
 
     /* Buttons */
-    button[kind="primary"] {
+    button[kind="primary"],
+    button[data-testid="stBaseButton-primary"] {
         background-color: var(--cv-primary) !important;
         color: #FFFFFF !important;
         border: 1px solid var(--cv-primary) !important;
@@ -622,24 +649,46 @@ st.markdown("""
         font-weight: 600 !important;
         font-size: 13px !important;
         min-height: 2.35rem !important;
-        transition: background-color 0.12s ease !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        transition: background-color 0.12s ease, border-color 0.12s ease !important;
     }
-    button[kind="primary"]:hover {
+    button[kind="primary"] *,
+    button[data-testid="stBaseButton-primary"] * {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+    }
+    button[kind="primary"]:hover,
+    button[data-testid="stBaseButton-primary"]:hover {
         background-color: var(--cv-primary-dark) !important;
         border-color: var(--cv-primary-dark) !important;
     }
-    button[kind="secondary"] {
+
+    button[kind="secondary"],
+    button[data-testid="stBaseButton-secondary"] {
         background-color: var(--cv-surface) !important;
         color: var(--cv-text) !important;
-        border: 1px solid var(--cv-border) !important;
+        border: 1px solid #BAC5BE !important;
         border-radius: 3px !important;
         font-size: 13px !important;
+        font-weight: 600 !important;
         min-height: 2.35rem !important;
-        transition: background-color 0.12s ease !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+        transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease !important;
     }
-    button[kind="secondary"]:hover {
-        background-color: var(--cv-surface-muted) !important;
-        border-color: #C8CCC5 !important;
+    button[kind="secondary"] *,
+    button[data-testid="stBaseButton-secondary"] * {
+        color: var(--cv-text) !important;
+        font-weight: 600 !important;
+    }
+    button[kind="secondary"]:hover,
+    button[data-testid="stBaseButton-secondary"]:hover {
+        background-color: #F1F6F3 !important;
+        border-color: var(--cv-primary) !important;
+        color: var(--cv-primary) !important;
+    }
+    button[kind="secondary"]:hover *,
+    button[data-testid="stBaseButton-secondary"]:hover * {
+        color: var(--cv-primary) !important;
     }
 
     div[data-testid="stDownloadButton"] button {
@@ -651,6 +700,7 @@ st.markdown("""
         font-size: 13px !important;
         min-height: 2.35rem !important;
         padding: 0.45rem 1rem !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     }
     div[data-testid="stDownloadButton"] button:hover {
         background-color: var(--cv-primary-light) !important;
@@ -671,22 +721,142 @@ st.markdown("""
 
     /* Uploader */
     div[data-testid="stFileUploader"] { padding: 0; }
-    div[data-testid="stFileUploader"] section {
-        border-radius: 3px;
-        border: 1px dashed #C8CCC5;
-        background: var(--cv-surface);
-        padding: 0.55rem;
+    div[data-testid="stFileUploader"] label {
+        color: var(--cv-text) !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.02em !important;
+        margin-bottom: 0.35rem !important;
     }
+    div[data-testid="stFileUploader"] label p {
+        color: var(--cv-text) !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.02em !important;
+    }
+    div[data-testid="stFileUploader"] section {
+        border-radius: 4px !important;
+        border: 1px dashed #BAC5BE !important;
+        background: var(--cv-surface) !important;
+        padding: 0.75rem 0.95rem !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+        transition: border-color 0.15s ease, background-color 0.15s ease !important;
+    }
+    div[data-testid="stFileUploader"] section:hover {
+        border-color: var(--cv-primary) !important;
+        background: #FAFBF9 !important;
+    }
+    div[data-testid="stFileUploader"] section [data-testid="stFileUploaderDropzoneInstructions"],
+    div[data-testid="stFileUploader"] section span,
+    div[data-testid="stFileUploader"] section p {
+        color: #2D3D35 !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+    }
+    div[data-testid="stFileUploader"] section small {
+        color: var(--cv-text-sec) !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.01em !important;
+    }
+    div[data-testid="stFileUploader"] section button,
+    div[data-testid="stFileUploader"] section button[kind="secondary"] {
+        background-color: #FFFFFF !important;
+        color: var(--cv-text) !important;
+        border: 1px solid #BAC5BE !important;
+        border-radius: 3px !important;
+        font-weight: 600 !important;
+        font-size: 12px !important;
+        padding: 0.35rem 0.85rem !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        transition: all 0.12s ease !important;
+    }
+    div[data-testid="stFileUploader"] section button:hover {
+        background-color: #EFF5F1 !important;
+        border-color: var(--cv-primary) !important;
+        color: var(--cv-primary) !important;
+    }
+    div[data-testid="stFileUploader"] section button * {
+        color: inherit !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stFileUploaderFile"] {
+        background: #F1F6F3 !important;
+        border: 1px solid #CAD6CF !important;
+        border-radius: 3px !important;
+        color: var(--cv-text) !important;
+    }
+    div[data-testid="stFileUploaderFile"] * {
+        color: var(--cv-text) !important;
+    }
+
+    /* Selectbox */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+        background-color: var(--cv-surface) !important;
+        border: 1px solid #BAC5BE !important;
+        border-radius: 4px !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    }
+    div[data-testid="stSelectbox"] div[data-baseweb="select"]:hover {
+        border-color: var(--cv-primary) !important;
+    }
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
+        color: var(--cv-text) !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stSelectbox"] svg {
+        fill: var(--cv-primary) !important;
+        color: var(--cv-primary) !important;
+        opacity: 1 !important;
+    }
+
+    /* Slider */
     div[data-testid="stSlider"] label {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--cv-text);
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: var(--cv-text) !important;
+    }
+    div[data-testid="stSlider"] div[data-testid="stThumbValue"] {
+        color: var(--cv-text) !important;
+        font-weight: 600 !important;
+        font-size: 11px !important;
+    }
+
+    /* Caption & Privacy Text */
+    div[data-testid="stCaptionContainer"] p,
+    .stCaption,
+    small.stCaption {
+        color: var(--cv-text-sec) !important;
+        font-size: 11.5px !important;
+        line-height: 1.45 !important;
+        font-weight: 500 !important;
+    }
+
+    /* Tooltip / Help Icon */
+    [data-testid="stTooltipIcon"] svg,
+    [data-testid="stTooltipHoverTarget"] svg,
+    button[aria-label="Help"] svg {
+        color: var(--cv-text-sec) !important;
+        fill: var(--cv-text-sec) !important;
+        opacity: 0.85 !important;
+    }
+    [data-testid="stTooltipIcon"]:hover svg,
+    [data-testid="stTooltipHoverTarget"]:hover svg {
+        color: var(--cv-primary) !important;
+        fill: var(--cv-primary) !important;
+        opacity: 1 !important;
     }
 
     /* Select / metrics polish */
     div[data-testid="stMetricValue"] {
         font-size: 1.15rem !important;
         font-weight: 600 !important;
+        color: var(--cv-text) !important;
+    }
+    div[data-testid="stMetricLabel"] p {
+        color: var(--cv-text-sec) !important;
+        font-weight: 500 !important;
     }
 
     /* Hide Streamlit chrome noise */
@@ -1052,12 +1222,12 @@ def render_header(model_display: str):
             <div class="cv-header-sub">Clinical Research Intelligence</div>
         </div>
         <div class="cv-header-right">
-            <span>Clinical Research System</span>
+            <span class="cv-header-tag">Clinical Research System</span>
             <span class="cv-status-pill">
                 <span class="cv-dot cv-dot-ok"></span>
                 Operational
             </span>
-            <span style="font-size:11px;color:#5E6561;">{model_display}</span>
+            <span class="cv-model-pill">{model_display}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1651,7 +1821,7 @@ def main():
         <div class="cv-card">
             <div class="cv-card-title">
                 <span>Analysis History</span>
-                <span style="font-weight:500;color:#5E6561;">Clinical Analysis Log · Session Only</span>
+                <span style="font-weight:600;color:var(--cv-text-sec);font-size:11px;">Clinical Analysis Log · Session Only</span>
             </div>
         """, unsafe_allow_html=True)
 
@@ -1788,7 +1958,7 @@ def main():
         <div class="cv-card">
             <div class="cv-card-title">
                 <span>Model Performance</span>
-                <span style="font-weight:500;color:#5E6561;">Independent Test Set (26 Images)</span>
+                <span style="font-weight:600;color:var(--cv-text-sec);font-size:11px;">Independent Test Set (26 Images)</span>
             </div>
             <div class="cv-section-desc">
                 Comparison of transfer-learning backbones trained under identical hyperparameters
@@ -1868,14 +2038,14 @@ def main():
         <div class="cv-card">
             <div class="cv-card-title">
                 <span>About</span>
-                <span style="font-weight:500;color:#5E6561;">Research Project</span>
+                <span style="font-weight:600;color:var(--cv-text-sec);font-size:11px;">Research Project</span>
             </div>
             <div style="font-size:14px;color:#1C1F1D;line-height:1.55;margin-bottom:0.75rem;">
                 <b>ColonVision AI</b> is an engineering research prototype for AI-assisted research analysis
                 of colorectal cancer and colon diverticula from colonoscopy images using transfer learning
                 and Grad-CAM interpretability visualization.
             </div>
-            <div style="font-size:13px;color:#5E6561;line-height:1.55;">
+            <div style="font-size:13px;color:var(--cv-text-sec);line-height:1.55;">
                 <b>Core components:</b>
                 <ul>
                     <li><b>Endoscopy Domain Validator</b> — cosine-similarity feature matching to reject non-endoscopic imagery prior to classification.</li>
