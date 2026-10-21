@@ -94,3 +94,6 @@ stitch_design/
 .coverage
 htmlcov/
 
+# Local Torch Hub Cache
+.torch_cache/
+

@@ -30,10 +30,14 @@ from fastapi.responses import Response, JSONResponse, FileResponse
 from pydantic import BaseModel
 
 # Project paths
+import os
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = PROJECT_ROOT / "models"
 SAMPLES_DIR = PROJECT_ROOT / "app" / "samples"
 PROFILE_PATH = MODELS_DIR / "endoscopy_validator_profile.json"
+TORCH_CACHE_DIR = PROJECT_ROOT / ".torch_cache"
+if not os.environ.get("TORCH_HOME"):
+    os.environ["TORCH_HOME"] = str(TORCH_CACHE_DIR.resolve())
 
 # Import existing domain logic from ColonVision AI project
 import sys

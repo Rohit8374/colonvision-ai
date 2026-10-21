@@ -62,22 +62,40 @@ eval_transform = transforms.Compose([
 ])
 
 
+TORCH_CACHE_DIR = PROJECT_ROOT / ".torch_cache"
+if not os.environ.get("TORCH_HOME"):
+    os.environ["TORCH_HOME"] = str(TORCH_CACHE_DIR.resolve())
+
+
 # ── Feature Extractor Builder ─────────────────────────────────────────────────
 def get_feature_extractor():
-    try:
-        base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
-    except Exception as e:
-        print(f"[WARN] Failed to load online ImageNet-1K weights ({e}). Initializing safe local backbone.")
+    # If checkpoint exists in local persistent TORCH_HOME, load directly with mmap without network latency
+    local_ckpt = Path(os.environ.get("TORCH_HOME", str(PROJECT_ROOT / ".torch_cache"))) / "hub" / "checkpoints" / "resnet50-0676ba61.pth"
+    if not local_ckpt.exists():
+        # Also check standard user cache
+        user_ckpt = Path.home() / ".cache" / "torch" / "hub" / "checkpoints" / "resnet50-0676ba61.pth"
+        if user_ckpt.exists():
+            local_ckpt = user_ckpt
+
+    if local_ckpt.exists() and local_ckpt.stat().st_size > 100000000:
         base_model = models.resnet50(weights=None)
-        resnet_ckpt = MODELS_DIR / "resnet50_best.pth"
-        if resnet_ckpt.exists():
-            try:
-                state_dict = torch.load(resnet_ckpt, map_location="cpu")
-                backbone_dict = {k: v for k, v in state_dict.items() if not k.startswith("fc.")}
-                base_model.load_state_dict(backbone_dict, strict=False)
-                print(f"[OK] Fallback feature extractor initialized from {resnet_ckpt.name}")
-            except Exception as le:
-                print(f"[WARN] Could not load state_dict into fallback model: {le}")
+        state_dict = torch.load(local_ckpt, map_location="cpu", mmap=True)
+        base_model.load_state_dict(state_dict)
+    else:
+        try:
+            base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        except Exception as e:
+            print(f"[WARN] Failed to load online ImageNet-1K weights ({e}). Initializing safe local backbone.")
+            base_model = models.resnet50(weights=None)
+            resnet_ckpt = MODELS_DIR / "resnet50_best.pth"
+            if resnet_ckpt.exists():
+                try:
+                    state_dict = torch.load(resnet_ckpt, map_location="cpu", mmap=True)
+                    backbone_dict = {k: v for k, v in state_dict.items() if not k.startswith("fc.")}
+                    base_model.load_state_dict(backbone_dict, strict=False)
+                    print(f"[OK] Fallback feature extractor initialized from {resnet_ckpt.name}")
+                except Exception as le:
+                    print(f"[WARN] Could not load state_dict into fallback model: {le}")
     base_model.eval()
     base_model.to(DEVICE)
     # Remove final classification linear layer, retain pooling -> 2048-dim embedding

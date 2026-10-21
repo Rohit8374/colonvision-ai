@@ -53,15 +53,31 @@ def main():
     print(f" * Documentation: http://{args.host}:{port}/docs")
     print("-" * 65)
 
+    # Configure persistent TORCH_HOME inside project repository so weights are retained on Render
+    torch_cache_dir = PROJECT_ROOT / ".torch_cache"
+    torch_cache_dir.mkdir(parents=True, exist_ok=True)
+    if not os.environ.get("TORCH_HOME"):
+        os.environ["TORCH_HOME"] = str(torch_cache_dir.resolve())
+
     # Pre-cache ImageNet-1K ResNet-50 weights before binding port to prevent request-time timeouts
     try:
-        print("Checking/caching ImageNet-1K validator backbone on disk...")
+        checkpoints_dir = Path(os.environ["TORCH_HOME"]) / "hub" / "checkpoints"
+        checkpoints_dir.mkdir(parents=True, exist_ok=True)
+        ckpt_file = checkpoints_dir / "resnet50-0676ba61.pth"
+        if not ckpt_file.exists() or ckpt_file.stat().st_size < 100000000:
+            print(f"Downloading ImageNet-1K weights to {ckpt_file}...")
+            import urllib.request
+            urllib.request.urlretrieve(
+                "https://download.pytorch.org/models/resnet50-0676ba61.pth",
+                str(ckpt_file),
+            )
+            print("Download finished.")
         import gc
         import torchvision.models as tv_models
         m = tv_models.resnet50(weights=tv_models.ResNet50_Weights.IMAGENET1K_V1)
         del m
         gc.collect()
-        print("ImageNet-1K validator weights verified and ready.")
+        print(f"ImageNet-1K validator weights verified and ready on disk ({ckpt_file.stat().st_size} bytes).")
     except Exception as e:
         print(f"Backbone pre-cache notice: {e}")
 
