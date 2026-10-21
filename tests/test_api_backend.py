@@ -39,7 +39,35 @@ def test_backend_api():
     assert r.status_code == 200, f"Samples check failed: {r.text}"
     samples = r.json().get("samples", [])
     assert len(samples) >= 2, f"Expected at least 2 samples, got {len(samples)}"
+    for s in samples:
+        assert "image_url" in s, f"Missing image_url in sample {s['id']}"
+        assert "static_url" in s, f"Missing static_url in sample {s['id']}"
+        assert s.get("available") is True, f"Sample {s['id']} should be available"
     print(f"   [PASS] Loaded {len(samples)} research samples: {[s['id'] for s in samples]}")
+
+    # 2b. Direct sample image endpoints
+    print("\n2b. Testing GET /api/samples/image/{sample_id}...")
+    for s_id in ["cancer", "diverticula"]:
+        r_img = client.get(f"/api/samples/image/{s_id}")
+        assert r_img.status_code == 200, f"Sample image {s_id} failed: {r_img.status_code}"
+        assert "image/jpeg" in r_img.headers["content-type"]
+        assert len(r_img.content) > 10000, f"Sample image {s_id} too small: {len(r_img.content)} bytes"
+        print(f"   [PASS] Sample image endpoint for '{s_id}' served {len(r_img.content)} bytes.")
+
+    # 2c. Direct static file route
+    print("\n2c. Testing GET /samples/... static files...")
+    for fn in ["sample_colorectal_cancer.jpg", "sample_colon_diverticula.jpg"]:
+        r_stat = client.get(f"/samples/{fn}")
+        assert r_stat.status_code == 200, f"Static sample {fn} failed: {r_stat.status_code}"
+        assert len(r_stat.content) > 10000
+        print(f"   [PASS] Static sample '/samples/{fn}' served {len(r_stat.content)} bytes.")
+
+    # 2d. Unknown sample 404 JSON error
+    r_bad_sample = client.get("/api/samples/image/unknown_sample_id")
+    assert r_bad_sample.status_code == 404
+    assert "application/json" in r_bad_sample.headers["content-type"]
+    assert "error" in r_bad_sample.json()
+    print("   [PASS] Nonexistent sample returned structured 404 JSON.")
 
     # 3. Domain validation
     print("\n3. Testing POST /api/validate with Cancer sample...")

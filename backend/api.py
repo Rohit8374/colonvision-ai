@@ -13,14 +13,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
+import gc
+import json
 import numpy as np
 from PIL import Image
 import torch
+
+# Limit PyTorch CPU thread pools to conserve RAM on cloud container (Render 512MB RAM limit)
+torch.set_num_threads(1)
+
 import matplotlib
 import matplotlib.cm as cm
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response, JSONResponse
+from fastapi.responses import Response, JSONResponse, FileResponse
 from pydantic import BaseModel
 
 # Project paths
@@ -255,7 +261,17 @@ def compute_gradcam_and_overlay(
 
 @app.get("/api/health")
 def health_check():
-    validator = get_cached_validator()
+    """Ultra-fast, non-blocking health check for Render and orchestrators."""
+    profile_loaded = PROFILE_PATH.exists()
+    threshold = 0.68
+    if profile_loaded:
+        try:
+            with open(PROFILE_PATH, "r", encoding="utf-8") as f:
+                pdata = json.load(f)
+            threshold = float(pdata.get("metadata", {}).get("calibrated_threshold", 0.68))
+        except Exception:
+            pass
+
     return {
         "status": "online",
         "device": str(DEVICE),
@@ -271,20 +287,44 @@ def health_check():
             for k, v in MODEL_CONFIGS.items()
         },
         "validator": {
-            "threshold": validator.threshold,
-            "profile_loaded": True,
+            "threshold": threshold,
+            "profile_loaded": profile_loaded,
         },
     }
 
 
+@app.get("/api/samples/image/{sample_id}")
+async def get_sample_image(sample_id: str):
+    """Direct static-serving endpoint for benchmark sample images on deployed domains."""
+    if sample_id == "cancer":
+        filename = "sample_colorectal_cancer.jpg"
+    elif sample_id == "diverticula":
+        filename = "sample_colon_diverticula.jpg"
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown sample ID '{sample_id}'. Available benchmark IDs are 'cancer' and 'diverticula'.",
+        )
+
+    file_path = SAMPLES_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Sample image file not found on server at: {file_path}",
+        )
+    return FileResponse(file_path, media_type="image/jpeg")
+
+
 @app.get("/api/samples")
 def get_research_samples():
-    """Returns metadata and base64 preview of preloaded clinical samples."""
+    """Returns metadata, direct URLs, and base64 preview of preloaded clinical samples."""
     samples = []
+    missing_files = []
     sample_files = [
         {
             "id": "cancer",
             "name": "colon_neoplasm_cecum_018.jpg",
+            "filename": "sample_colorectal_cancer.jpg",
             "display_title": "Research Sample — Cancer Class",
             "path": SAMPLES_DIR / "sample_colorectal_cancer.jpg",
             "morphology": "Cecum frame • Paris 0-IIa morphology benchmark",
@@ -294,6 +334,7 @@ def get_research_samples():
         {
             "id": "diverticula",
             "name": "sigmoid_diverticulum_093.jpg",
+            "filename": "sample_colon_diverticula.jpg",
             "display_title": "Research Sample — Diverticula Class",
             "path": SAMPLES_DIR / "sample_colon_diverticula.jpg",
             "morphology": "Sigmoid colon frame • Multiple pouching orifices",
@@ -304,22 +345,47 @@ def get_research_samples():
 
     for item in sample_files:
         if item["path"].exists():
-            with Image.open(item["path"]) as img:
-                img_rgb = img.convert("RGB")
-                w, h = img_rgb.size
-                size_mb = item["path"].stat().st_size / (1024 * 1024)
+            try:
+                with Image.open(item["path"]) as img:
+                    img_rgb = img.convert("RGB")
+                    w, h = img_rgb.size
+                    size_mb = item["path"].stat().st_size / (1024 * 1024)
+                    samples.append({
+                        "id": item["id"],
+                        "filename": item["name"],
+                        "sample_file": item["filename"],
+                        "display_title": item["display_title"],
+                        "morphology": item["morphology"],
+                        "type": item["type"],
+                        "color_tag": item["color_tag"],
+                        "dimensions": f"{w} × {h} px",
+                        "filesize": f"{size_mb:.2f} MB",
+                        "image_url": f"/api/samples/image/{item['id']}",
+                        "static_url": f"/samples/{item['filename']}",
+                        "data_uri": pil_to_base64_data_uri(img_rgb, quality=85),
+                        "available": True,
+                    })
+            except Exception as e:
                 samples.append({
                     "id": item["id"],
                     "filename": item["name"],
-                    "display_title": item["display_title"],
-                    "morphology": item["morphology"],
-                    "type": item["type"],
-                    "color_tag": item["color_tag"],
-                    "dimensions": f"{w} × {h} px",
-                    "filesize": f"{size_mb:.2f} MB",
-                    "data_uri": pil_to_base64_data_uri(img_rgb, quality=85),
+                    "available": False,
+                    "error": f"Failed reading sample image {item['path']}: {str(e)}",
                 })
-    return {"samples": samples}
+        else:
+            missing_files.append(str(item["path"]))
+            samples.append({
+                "id": item["id"],
+                "filename": item["name"],
+                "available": False,
+                "error": f"Sample image file not found at: {item['path']}",
+            })
+
+    return {
+        "samples": samples,
+        "missing_count": len(missing_files),
+        "missing_files": missing_files,
+    }
 
 
 @app.post("/api/validate")
@@ -341,7 +407,10 @@ async def validate_image(
     elif sample_id and sample_id not in ("null", "undefined", ""):
         sample_path = SAMPLES_DIR / f"sample_{'colorectal_cancer' if sample_id == 'cancer' else 'colon_diverticula'}.jpg"
         if not sample_path.exists():
-            raise HTTPException(status_code=404, detail="Sample not found")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Benchmark sample file not found on disk at: {sample_path}",
+            )
         img = Image.open(sample_path).convert("RGB")
     else:
         raise HTTPException(status_code=400, detail="No file or sample_id provided")
@@ -389,7 +458,10 @@ async def analyze_image(
         sample_filename = "sample_colorectal_cancer.jpg" if sample_id == "cancer" else "sample_colon_diverticula.jpg"
         sample_path = SAMPLES_DIR / sample_filename
         if not sample_path.exists():
-            raise HTTPException(status_code=404, detail="Sample not found")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Benchmark sample file not found on disk at: {sample_path}",
+            )
         img = Image.open(sample_path).convert("RGB")
         filename = "colon_neoplasm_cecum_018.jpg" if sample_id == "cancer" else "sigmoid_diverticulum_093.jpg"
         filesize_mb = sample_path.stat().st_size / (1024 * 1024)
@@ -473,6 +545,7 @@ async def analyze_image(
     if len(_ANALYSIS_HISTORY) > 20:
         _ANALYSIS_HISTORY.pop()
 
+    gc.collect()
     return analysis_record
 
 
@@ -496,7 +569,10 @@ async def compare_all_models(
         sample_filename = "sample_colorectal_cancer.jpg" if sample_id == "cancer" else "sample_colon_diverticula.jpg"
         sample_path = SAMPLES_DIR / sample_filename
         if not sample_path.exists():
-            raise HTTPException(status_code=404, detail="Sample not found")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Benchmark sample file not found on disk at: {sample_path}",
+            )
         img = Image.open(sample_path).convert("RGB")
     else:
         raise HTTPException(status_code=400, detail="No file or sample_id provided")
@@ -569,6 +645,7 @@ async def compare_all_models(
         agreement_rate = max_votes / total_votes
         consensus_class = majority
 
+    gc.collect()
     return {
         "consensus": {
             "agreement_rate": agreement_rate,
@@ -646,9 +723,12 @@ def clear_session_history():
     return {"status": "cleared", "count": 0}
 
 
-# ── Mount Frontend Static Assets ──────────────────────────────────────────────
+# ── Mount Frontend Static Assets & Samples ──────────────────────────────────────
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+
+if SAMPLES_DIR.exists():
+    app.mount("/samples", StaticFiles(directory=SAMPLES_DIR), name="samples")
 
 DIST_DIR = PROJECT_ROOT / "frontend" / "dist"
 if DIST_DIR.exists() and (DIST_DIR / "index.html").exists():
@@ -661,7 +741,7 @@ if DIST_DIR.exists() and (DIST_DIR / "index.html").exists():
 
     @app.get("/{full_path:path}")
     async def serve_spa_routes(full_path: str):
-        # Do not catch API routes
+        # Do not catch API or samples routes
         clean_path = full_path.lstrip("/")
         if clean_path.startswith("api"):
             return JSONResponse(
@@ -670,6 +750,15 @@ if DIST_DIR.exists() and (DIST_DIR / "index.html").exists():
                     "error": "Not Found",
                     "message": f"API endpoint '/{clean_path}' does not exist on this server.",
                     "detail": "Endpoint not found",
+                },
+            )
+        if clean_path.startswith("samples"):
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "error": "Not Found",
+                    "message": f"Sample static file '/{clean_path}' does not exist.",
+                    "detail": "Sample not found",
                 },
             )
         file_path = DIST_DIR / full_path

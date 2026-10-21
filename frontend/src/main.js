@@ -273,16 +273,30 @@ async function loadSamples() {
         state.samples[s.id] = s;
       });
     }
-    // Clean initial state: benchmark samples are ready in state, but workspace remains
-    // in clean upload mode until user explicitly clicks a sample or uploads an image.
+    if (data && data.missing_count > 0) {
+      console.warn('Some benchmark samples are missing on server:', data.missing_files);
+    }
   } catch (err) {
     console.error('Samples loading error:', err);
   }
 }
 
-function applySample(sampleId) {
-  const sample = state.samples[sampleId];
-  if (!sample) return;
+async function applySample(sampleId) {
+  let sample = state.samples[sampleId];
+  if (!sample) {
+    await loadSamples();
+    sample = state.samples[sampleId];
+  }
+
+  if (!sample) {
+    showAlert('Sample Unavailable', `Benchmark sample '${sampleId}' could not be loaded from backend.`);
+    return;
+  }
+
+  if (sample.available === false || sample.error) {
+    showAlert('Sample File Missing', sample.error || `Benchmark sample file for '${sampleId}' not found on server.`);
+    return;
+  }
 
   state.selectedSampleId = sampleId;
   state.selectedFile = null;
@@ -311,10 +325,12 @@ function applySample(sampleId) {
     elements.workspaceDropzone.classList.add('hidden');
   }
 
-  elements.workspacePreviewImg.src = sample.data_uri;
-  elements.workspaceFilename.textContent = sample.filename;
-  elements.workspaceDim.textContent = sample.dimensions;
-  elements.workspaceFilesize.textContent = sample.filesize;
+  // Prefer direct HTTP image URL on deployed domain, fallback to base64
+  const imageSrc = sample.image_url || sample.static_url || sample.data_uri || `/api/samples/image/${sampleId}`;
+  elements.workspacePreviewImg.src = imageSrc;
+  elements.workspaceFilename.textContent = sample.filename || `${sampleId}.jpg`;
+  elements.workspaceDim.textContent = sample.dimensions || '—';
+  elements.workspaceFilesize.textContent = sample.filesize || '—';
   elements.workspaceStatusBadge.textContent = 'Validated';
   elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
 

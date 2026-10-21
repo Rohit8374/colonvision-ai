@@ -4,7 +4,7 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "pip install -r requirements.txt && python -c \"import torchvision.models as models; models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)\""
     startCommand: "python run.py"
     healthCheckPath: /api/health
     envVars:

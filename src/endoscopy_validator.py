@@ -63,7 +63,20 @@ eval_transform = transforms.Compose([
 
 # ── Feature Extractor Builder ─────────────────────────────────────────────────
 def get_feature_extractor():
-    base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+    try:
+        base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+    except Exception as e:
+        print(f"[WARN] Failed to load online ImageNet-1K weights ({e}). Initializing safe local backbone.")
+        base_model = models.resnet50(weights=None)
+        resnet_ckpt = MODELS_DIR / "resnet50_best.pth"
+        if resnet_ckpt.exists():
+            try:
+                state_dict = torch.load(resnet_ckpt, map_location="cpu")
+                backbone_dict = {k: v for k, v in state_dict.items() if not k.startswith("fc.")}
+                base_model.load_state_dict(backbone_dict, strict=False)
+                print(f"[OK] Fallback feature extractor initialized from {resnet_ckpt.name}")
+            except Exception as le:
+                print(f"[WARN] Could not load state_dict into fallback model: {le}")
     base_model.eval()
     base_model.to(DEVICE)
     # Remove final classification linear layer, retain pooling -> 2048-dim embedding
@@ -464,7 +477,17 @@ class EndoscopyValidator:
 
         self.threshold = float(data["metadata"]["calibrated_threshold"])
         self.centroid = np.array(data["centroid_embedding"], dtype=np.float32)
-        self.extractor = get_feature_extractor()
+        self._extractor = None
+
+    @property
+    def extractor(self) -> nn.Module:
+        if self._extractor is None:
+            self._extractor = get_feature_extractor()
+        return self._extractor
+
+    @extractor.setter
+    def extractor(self, value: nn.Module):
+        self._extractor = value
 
     def validate_image(self, pil_image: Image.Image) -> dict:
         """
