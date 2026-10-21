@@ -76,3 +76,21 @@ Thumbs.db
 desktop.ini
 *.tmp
 *.temp
+
+# Frontend Dependencies & Caches
+node_modules/
+frontend/node_modules/
+.npm/
+
+# Keep compiled frontend distribution bundle for zero-dependency Python deployment
+!frontend/dist/
+!frontend/dist/**
+
+# Local Temporary Design Resources
+stitch_design/
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+

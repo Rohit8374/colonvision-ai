@@ -148,5 +148,11 @@ def run_tests():
     print("ALL TESTS (A, B, C, D, E, F, G) PASSED PERFECTLY!")
     print("=" * 70)
 
+
+def test_endoscopy_domain_validator():
+    run_tests()
+
+
 if __name__ == "__main__":
     run_tests()
+

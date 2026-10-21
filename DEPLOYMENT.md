@@ -81,3 +81,23 @@ Once the build completes (takes ~2–3 minutes for initial container setup):
    - Click **Sample: Diverticula** $\rightarrow$ click **Analyze Image** $\rightarrow$ verify classification and Grad-CAM.
 3. **Test OOD Gate:** Upload a non-endoscopic image (photo, document, screenshot) $\rightarrow$ verify that the domain verification gate rejects the image and suppresses inference.
 4. **Test PDF Report:** Click **Download Analysis Report (PDF)** and verify the generated PDF.
+
+---
+
+## 3. Alternative: Unified FastAPI & Modern Web Platform
+
+ColonVision AI also includes a production-grade FastAPI clinical research backend and compiled responsive web client:
+
+### Running Locally
+```powershell
+# Starts FastAPI server on http://127.0.0.1:8000 and serves compiled frontend
+python run.py
+```
+- **Web Interface:** `http://127.0.0.1:8000/`
+- **Interactive API Docs (Swagger):** `http://127.0.0.1:8000/docs`
+- **Health Telemetry:** `http://127.0.0.1:8000/api/health`
+
+### Cloud Container / PaaS Deployment (Docker / Render / Railway)
+- **Start Command:** `python run.py --host 0.0.0.0 --port $PORT`
+- **Build Step:** Zero Node.js build required at runtime (compiled static assets are bundled in `frontend/dist/`).
+

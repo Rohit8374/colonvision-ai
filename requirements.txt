@@ -24,3 +24,10 @@ matplotlib>=3.7.0
 # Clinical PDF Report Generation & Verification
 reportlab>=4.0.0
 pypdf>=3.0.0
+
+# FastAPI Clinical Research Backend & API Gateway
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+python-multipart>=0.0.6
+requests>=2.28.0
+

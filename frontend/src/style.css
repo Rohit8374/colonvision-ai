@@ -1,0 +1,130 @@
+@layer base {
+  html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: #f1fcf5;
+    color: #141e1a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  main > :first-child {
+    margin-top: 0 !important;
+  }
+  main > :last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #ebf6ef;
+}
+::-webkit-scrollbar-thumb {
+  background: #c0c8c3;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #717974;
+}
+
+/* Saliency pulse animation */
+@keyframes reticle-pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 0.4; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.animate-reticle {
+  animation: reticle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Tab indicator */
+.tab-active {
+  color: #154536 !important;
+  font-weight: 600 !important;
+}
+.tab-active span.material-symbols-outlined {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* Smooth view transitions */
+.view-panel {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+.view-panel.active {
+  display: flex;
+  opacity: 1;
+}
+
+/* Diagnostic canvas styling */
+.diagnostic-canvas {
+  background-color: #101713;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7);
+}
+
+/* Saliency reticle coordinate readout badge */
+.reticle-badge {
+  background: rgba(31, 42, 37, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Clinical Slide Drawer Transitions */
+#clinical-drawer.drawer-open {
+  transform: translateX(0) !important;
+}
+#drawer-backdrop.backdrop-open {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+/* Active sample button highlight */
+.sample-select-btn.sample-active {
+  border-color: #154536 !important;
+  background-color: #d3e3da !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* Active drawer nav item */
+.drawer-nav-item.active {
+  background-color: #d3e3da !important;
+  color: #154536 !important;
+  font-weight: 600 !important;
+}
+.drawer-nav-item.active .material-symbols-outlined {
+  color: #154536 !important;
+  font-variation-settings: 'FILL' 1;
+}
+
+/* Active mobile bottom nav item */
+.mobile-nav-btn.active {
+  color: #154536 !important;
+  font-weight: 600 !important;
+}
+.mobile-nav-btn.active .material-symbols-outlined {
+  color: #154536 !important;
+  font-variation-settings: 'FILL' 1;
+}
+

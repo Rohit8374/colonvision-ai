@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>ColonVision AI — Clinical Research Intelligence</title>
+  
+  <!-- Material Symbols & Typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Tailwind CSS Engine -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-variant": "#dae5de",
+            "surface-container-highest": "#dae5de",
+            "secondary-fixed-dim": "#bacac1",
+            "primary-container": "#154536",
+            "primary-fixed-dim": "#a0d1bc",
+            "surface-bright": "#f1fcf5",
+            "on-tertiary": "#ffffff",
+            "surface-container-high": "#dfebe4",
+            "surface-dim": "#d1ddd6",
+            "on-primary-container": "#82b29f",
+            "tertiary": "#1f2a25",
+            "surface-container": "#e5f1ea",
+            "inverse-primary": "#a0d1bc",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-container": "#9eaba4",
+            "on-secondary-container": "#57665e",
+            "error": "#ba1a1a",
+            "on-error-container": "#93000a",
+            "secondary-container": "#d3e3da",
+            "on-surface": "#141e1a",
+            "outline-variant": "#c0c8c3",
+            "on-tertiary-fixed-variant": "#3e4944",
+            "tertiary-fixed-dim": "#bdcac2",
+            "tertiary-container": "#34403a",
+            "outline": "#717974",
+            "inverse-surface": "#28332e",
+            "inverse-on-surface": "#e8f3ed",
+            "surface-tint": "#396756",
+            "on-tertiary-fixed": "#131e19",
+            "background": "#f1fcf5",
+            "on-secondary-fixed-variant": "#3c4a43",
+            "on-surface-variant": "#404944",
+            "on-background": "#141e1a",
+            "tertiary-fixed": "#d9e6de",
+            "on-secondary": "#ffffff",
+            "on-primary-fixed": "#002117",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "primary": "#002e21",
+            "surface": "#f1fcf5",
+            "on-secondary-fixed": "#111e18",
+            "secondary-fixed": "#d6e6dc",
+            "secondary": "#53625a",
+            "surface-container-low": "#ebf6ef",
+            "primary-fixed": "#bcedd8",
+            "on-primary": "#ffffff",
+            "on-primary-fixed-variant": "#204f3f"
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px"
+          },
+          spacing: {
+            margin: "2rem",
+            gutter: "1.25rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "margin-mobile": "1rem",
+            "space-sm": "0.5rem",
+            "gutter-mobile": "0.75rem",
+            "space-xl": "2rem"
+          },
+          fontFamily: {
+            "headline-xl": ["Inter", "sans-serif"],
+            "label-lg": ["JetBrains Mono", "monospace"],
+            "headline-xl-mobile": ["Inter", "sans-serif"],
+            "headline-lg": ["Inter", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "headline-sm": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "label-sm": ["JetBrains Mono", "monospace"],
+            "headline-md": ["Inter", "sans-serif"],
+            "label-md": ["JetBrains Mono", "monospace"],
+            "body-md": ["Inter", "sans-serif"]
+          },
+          fontSize: {
+            "headline-xl": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "label-lg": ["13px", { lineHeight: "18px", letterSpacing: "-0.01em", fontWeight: "500" }],
+            "headline-xl-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "headline-lg": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+            "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+            "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+            "body-sm": ["12px", { lineHeight: "18px", letterSpacing: "0.01em", fontWeight: "400" }],
+            "label-sm": ["10px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+            "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "label-md": ["11px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "500" }],
+            "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }]
+          }
+        }
+      }
+    };
+  </script>
+  <script type="module" crossorigin src="/assets/index-DjBkf8eU.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CgK77__v.css">
+</head>
+
+<body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-primary-fixed selection:text-on-primary-fixed">
+
+  <!-- ========================================================================= -->
+  <!-- CLINICAL SYSTEM DRAWER & BACKDROP                                         -->
+  <!-- ========================================================================= -->
+  <div id="drawer-backdrop" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs transition-opacity duration-300 hidden opacity-0"></div>
+  <aside id="clinical-drawer" class="fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-surface-container-lowest shadow-2xl border-r border-outline-variant/30 flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out">
+    <div class="p-4 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container-low">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-primary-container text-inverse-primary flex items-center justify-center font-bold text-[15px] shadow-xs">◈</div>
+        <div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">ColonVision AI</h2>
+          <p class="font-label-sm text-label-sm text-secondary">Clinical Systems Hub</p>
+        </div>
+      </div>
+      <button id="btn-close-drawer" class="w-8 h-8 flex items-center justify-center rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container transition-colors" title="Close Drawer" aria-label="Close Drawer">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
+      <!-- Direct Navigation -->
+      <div class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold px-2">Navigation Modules</span>
+        <button data-drawer-target="overview" class="drawer-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-body-md text-on-surface hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-[20px] text-primary">dashboard</span>
+          <span class="font-medium">Overview Dashboard</span>
+        </button>
+        <button data-drawer-target="analyze" class="drawer-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-body-md text-on-surface hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-[20px] text-primary">biotech</span>
+          <span class="font-medium">Image Analysis Workspace</span>
+        </button>
+        <button data-drawer-target="results" class="drawer-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-body-md text-on-surface hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-[20px] text-primary">insights</span>
+          <span class="font-medium">Results & Saliency</span>
+        </button>
+        <button data-drawer-target="models" class="drawer-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-body-md text-on-surface hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-[20px] text-primary">hub</span>
+          <span class="font-medium">Comparative Models</span>
+        </button>
+        <button data-drawer-target="about" class="drawer-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-body-md text-on-surface hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-[20px] text-primary">info</span>
+          <span class="font-medium">Academic Rigor & Methodology</span>
+        </button>
+      </div>
+
+      <!-- System Hardware & Model Telemetry -->
+      <div class="flex flex-col gap-2 p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 font-mono text-[11px]">
+        <div class="flex items-center justify-between border-b border-outline-variant/20 pb-2">
+          <span class="text-secondary uppercase font-semibold">Engine Telemetry</span>
+          <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Online</span>
+        </div>
+        <div class="flex items-center justify-between text-secondary pt-1">
+          <span>PyTorch Device</span>
+          <span id="drawer-device" class="font-semibold text-on-surface">CPU (Float32)</span>
+        </div>
+        <div class="flex items-center justify-between text-secondary">
+          <span>Domain Gatekeeper</span>
+          <span class="font-semibold text-primary">tau* = 0.6800</span>
+        </div>
+        <div class="flex items-center justify-between text-secondary">
+          <span>ResNet-50</span>
+          <span class="text-emerald-700">layer4[-1] Ready</span>
+        </div>
+        <div class="flex items-center justify-between text-secondary">
+          <span>DenseNet-121</span>
+          <span class="text-emerald-700">denseblock4 Ready</span>
+        </div>
+        <div class="flex items-center justify-between text-secondary">
+          <span>EfficientNet-B0</span>
+          <span class="text-emerald-700">features[-1] Ready</span>
+        </div>
+      </div>
+
+      <!-- Session Actions -->
+      <div class="flex flex-col gap-2">
+        <span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold px-2">Session Actions</span>
+        <button id="btn-drawer-clear-history" type="button" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-error hover:bg-red-50 transition-colors text-body-sm font-medium border border-error/20 active:scale-95">
+          <span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+          <span>Clear Retrospective Session</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-3 bg-surface-container border-t border-outline-variant/30 text-[10px] text-secondary text-center leading-normal">
+      Academic Research Prototype • Not FDA/CE Approved.<br>Clinical Research Investigation Only.
+    </div>
+  </aside>
+
+  <!-- ========================================================================= -->
+  <!-- TOP HEADER (Clinical Precision Institution Header)                       -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col justify-center">
+      <!-- Main Bar -->
+      <div class="flex items-center justify-between gap-3 h-14">
+        <!-- Logo & Brand Identity -->
+        <div class="flex items-center gap-2.5 min-w-0">
+          <button id="btn-toggle-menu" aria-label="Open Clinical Systems Drawer" class="lg:hidden w-10 h-10 flex items-center justify-center text-on-surface hover:text-primary transition-colors flex-shrink-0 rounded-lg hover:bg-surface-container">
+            <span class="material-symbols-outlined text-[24px]">menu</span>
+          </button>
+          
+          <button id="btn-nav-home" type="button" class="flex items-center gap-2.5 truncate text-left hover:opacity-85 transition-opacity" title="Return to Overview Dashboard">
+            <div class="w-8 h-8 rounded-lg bg-primary-container text-inverse-primary flex items-center justify-center font-bold text-[15px] shadow-xs flex-shrink-0">
+              ◈
+            </div>
+            <div class="flex items-center gap-2 truncate">
+              <span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">ColonVision AI</span>
+              <span class="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm tracking-wide uppercase flex-shrink-0">Research Prototype</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- Desktop Navigation Bar (Visible on lg and up - no duplicate with mobile bottom nav) -->
+        <nav class="hidden lg:flex items-center gap-1 bg-surface-container-low px-2 py-1 rounded-xl border border-outline-variant/30">
+          <button data-target="overview" class="desktop-nav-btn px-3 py-1.5 rounded-lg font-headline-sm text-body-sm font-medium transition-all text-primary-container bg-surface-container-lowest shadow-xs flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">dashboard</span>
+            <span>Overview</span>
+          </button>
+          <button data-target="analyze" class="desktop-nav-btn px-3 py-1.5 rounded-lg font-headline-sm text-body-sm font-medium transition-all text-secondary hover:text-on-surface flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">biotech</span>
+            <span>Analyze</span>
+          </button>
+          <button data-target="results" class="desktop-nav-btn px-3 py-1.5 rounded-lg font-headline-sm text-body-sm font-medium transition-all text-secondary hover:text-on-surface flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">insights</span>
+            <span>Results</span>
+          </button>
+          <button data-target="models" class="desktop-nav-btn px-3 py-1.5 rounded-lg font-headline-sm text-body-sm font-medium transition-all text-secondary hover:text-on-surface flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">hub</span>
+            <span>Models</span>
+          </button>
+          <button data-target="about" class="desktop-nav-btn px-3 py-1.5 rounded-lg font-headline-sm text-body-sm font-medium transition-all text-secondary hover:text-on-surface flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">info</span>
+            <span>About</span>
+          </button>
+        </nav>
+
+        <!-- Right System Indicators & Drawer Telemetry -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button id="system-status-indicator" type="button" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface-variant font-label-sm text-label-sm border border-outline-variant/40 cursor-pointer" title="System Telemetry & Hardware Hub">
+            <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+            <span class="font-medium text-primary">PyTorch Engine Ready</span>
+          </button>
+          <button id="btn-desktop-telemetry" type="button" aria-label="Open Telemetry Drawer" class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-xs hover:bg-primary-container transition-colors cursor-pointer" title="View System Telemetry & Session Hub">
+            <span class="material-symbols-outlined text-[18px]">tune</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Subtitle & Active Section Breadcrumb Strip -->
+      <div class="flex items-center justify-between px-1 h-9 border-t border-outline-variant/20">
+        <p class="font-label-md text-label-md text-secondary truncate">Explainable Endoscopy Research Platform</p>
+        <span id="current-view-badge" class="font-label-sm text-label-sm text-primary font-semibold uppercase tracking-wider pl-2 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+          <span id="view-title-text">Overview</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN WORKSPACE CONTAINER                                                  -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 flex flex-col relative w-full pt-4 pb-24 lg:pt-6 lg:pb-8 px-3 sm:px-4 max-w-6xl mx-auto">
+
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- VIEW 1: OVERVIEW DASHBOARD                                              -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <div id="view-overview" class="view-panel active flex-col w-full gap-space-lg">
+      <!-- Welcome / Purpose Card -->
+      <section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-xs border border-outline-variant/30 flex flex-col gap-space-md">
+        <div class="flex items-center gap-space-xs">
+          <span class="w-2 h-2 rounded-full bg-primary-container"></span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Diagnostic Legibility • Explainable AI</span>
+        </div>
+        <div class="flex flex-col gap-space-xs">
+          <h1 class="font-headline-xl text-headline-xl-mobile sm:text-headline-xl text-on-surface font-semibold tracking-tight leading-snug">
+            Understand the Image.<br />Explore the Evidence.
+          </h1>
+          <p class="font-body-md text-body-md text-secondary leading-relaxed max-w-2xl">
+            An explainable deep-learning research platform for exploring colonoscopy image classification, feature attribution, and diagnostic confidence intervals across colorectal cancer and diverticular disease.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm pt-space-xs max-w-xl">
+          <button id="cta-analyze-new" class="bg-primary-container text-on-primary py-3 px-4 rounded-lg font-headline-sm text-headline-sm font-medium flex items-center justify-center gap-space-sm shadow-xs hover:bg-primary active:scale-[0.99] transition-all">
+            <span>Analyze New Image</span>
+            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+          </button>
+          <button id="cta-explore-models" class="bg-surface-container-low text-primary-container py-3 px-4 rounded-lg font-headline-sm text-headline-sm font-medium flex items-center justify-center gap-space-sm border border-outline-variant/40 hover:bg-surface-container active:scale-[0.99] transition-all">
+            <span class="material-symbols-outlined text-[18px]">query_stats</span>
+            <span>Explore Model Performance</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Research Pipeline Strip -->
+      <section class="bg-surface-container-lowest rounded-xl p-space-md shadow-xs border border-outline-variant/30 flex flex-col gap-space-sm">
+        <div class="flex items-center justify-between">
+          <span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Pipeline Stages</span>
+          <span class="font-label-sm text-label-sm text-primary-container font-semibold">4-Tier Verification Architecture</span>
+        </div>
+        <div class="grid grid-cols-4 gap-2 relative pt-1">
+          <!-- Step 1 -->
+          <div class="flex flex-col items-center text-center gap-1 group">
+            <div class="w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold shadow-xs">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </div>
+            <span class="font-label-sm text-label-sm text-on-surface font-medium leading-tight">Image<br />Input</span>
+          </div>
+          <!-- Step 2 -->
+          <div class="flex flex-col items-center text-center gap-1 group">
+            <div class="w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold shadow-xs">
+              <span class="material-symbols-outlined text-[16px]">verified</span>
+            </div>
+            <span class="font-label-sm text-label-sm text-on-surface font-medium leading-tight">Domain<br />Verify</span>
+          </div>
+          <!-- Step 3 -->
+          <div class="flex flex-col items-center text-center gap-1 group">
+            <div class="w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold shadow-xs">
+              <span class="material-symbols-outlined text-[16px]">memory</span>
+            </div>
+            <span class="font-label-sm text-label-sm text-on-surface font-medium leading-tight">Model<br />Inference</span>
+          </div>
+          <!-- Step 4 -->
+          <div class="flex flex-col items-center text-center gap-1 group">
+            <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm text-label-sm font-bold shadow-xs">
+              <span class="material-symbols-outlined text-[16px]">visibility</span>
+            </div>
+            <span class="font-label-sm text-label-sm text-primary-container font-semibold leading-tight">Grad-CAM<br />XAI</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Evaluated Architectures -->
+      <section class="flex flex-col gap-space-sm">
+        <div class="flex items-center justify-between px-1">
+          <h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">Evaluated Architectures</h2>
+          <span class="font-label-sm text-label-sm text-secondary">3 Benchmarks</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+          <!-- DenseNet-121 -->
+          <div class="bg-surface-container-lowest rounded-xl p-space-md shadow-xs border border-outline-variant/30 flex flex-col gap-space-xs">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-space-xs">
+                <span class="font-headline-sm text-headline-sm text-on-surface font-bold">DenseNet-121</span>
+                <span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-medium">Optimal</span>
+              </div>
+              <span class="font-label-sm text-label-sm text-secondary">8.0M params</span>
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary">Feature-reuse connectivity ensuring multi-scale polyp boundary resolution.</p>
+            <div class="flex items-center justify-between pt-1">
+              <span class="font-label-sm text-label-sm uppercase text-on-surface-variant">Macro-F1 Metric</span>
+              <span class="font-label-lg text-label-lg font-bold text-primary-container">0.9328</span>
+            </div>
+            <div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+              <div class="bg-primary-container h-full rounded-full" style="width: 93.3%"></div>
+            </div>
+          </div>
+
+          <!-- ResNet-50 -->
+          <div class="bg-surface-container-lowest rounded-xl p-space-md shadow-xs border border-outline-variant/30 flex flex-col gap-space-xs">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-space-xs">
+                <span class="font-headline-sm text-headline-sm text-on-surface font-semibold">ResNet-50</span>
+                <span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">Reference</span>
+              </div>
+              <span class="font-label-sm text-label-sm text-secondary">25.6M params</span>
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary">Deep residual baseline for mucosal feature detection and feature ablation.</p>
+            <div class="flex items-center justify-between pt-1">
+              <span class="font-label-sm text-label-sm uppercase text-on-surface-variant">Macro-F1 Metric</span>
+              <span class="font-label-lg text-label-lg font-bold text-on-surface">1.0000</span>
+            </div>
+            <div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+              <div class="bg-secondary h-full rounded-full" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <!-- EfficientNet-B0 -->
+          <div class="bg-surface-container-lowest rounded-xl p-space-md shadow-xs border border-outline-variant/30 flex flex-col gap-space-xs">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-space-xs">
+                <span class="font-headline-sm text-headline-sm text-on-surface font-semibold">EfficientNet-B0</span>
+                <span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">Edge Lightweight</span>
+              </div>
+              <span class="font-label-sm text-label-sm text-secondary">5.3M params</span>
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary">Compound scaling optimized for real-time mobile frame telemetry.</p>
+            <div class="flex items-center justify-between pt-1">
+              <span class="font-label-sm text-label-sm uppercase text-on-surface-variant">Macro-F1 Metric</span>
+              <span class="font-label-lg text-label-lg font-bold text-on-surface">0.9328</span>
+            </div>
+            <div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+              <div class="bg-secondary h-full rounded-full" style="width: 93.3%"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Retrospective Analyses List -->
+      <section class="flex flex-col gap-space-sm">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-2">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">Recent Analyses</h2>
+            <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-secondary">Cohort Retrospective</span>
+          </div>
+          <button id="btn-overview-clear-history" type="button" class="px-2.5 py-1 rounded-lg text-secondary hover:text-error hover:bg-error-container/30 transition-colors font-label-sm text-label-sm flex items-center gap-1 active:scale-95" title="Clear Retrospective History">
+            <span class="material-symbols-outlined text-[16px]">delete_sweep</span>
+            <span>Clear History</span>
+          </button>
+        </div>
+        <div id="overview-history-container" class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- Research Metrics Panel -->
+      <section class="bg-surface-container rounded-xl p-space-md flex flex-col gap-space-sm shadow-xs border border-outline-variant/30">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px] text-primary-container">analytics</span>
+            <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Validation Cohort Summary</h3>
+          </div>
+          <span class="font-label-sm text-label-sm text-on-secondary-container font-mono">N = 168 clinical images</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 sm:gap-2 pt-1 text-center">
+          <div class="bg-surface-container-lowest rounded-lg p-2 sm:p-2.5 flex flex-col justify-center items-center shadow-xs border border-outline-variant/20">
+            <span class="font-label-sm text-[9px] sm:text-[10px] text-secondary uppercase truncate">Unique Frames</span>
+            <span class="font-bold text-on-surface font-mono text-sm sm:text-headline-md my-0.5">168</span>
+            <span class="font-label-sm text-[8px] sm:text-[9px] text-on-surface-variant leading-tight">139 Cancer • 29 Divert</span>
+          </div>
+          <div class="bg-surface-container-lowest rounded-lg p-2 sm:p-2.5 flex flex-col justify-center items-center shadow-xs border border-outline-variant/20">
+            <span class="font-label-sm text-[9px] sm:text-[10px] text-secondary uppercase truncate">Test Macro-F1</span>
+            <span class="font-bold text-primary-container font-mono text-sm sm:text-headline-md my-0.5">0.9328</span>
+            <span class="font-label-sm text-[8px] sm:text-[9px] text-primary-container leading-tight">DenseNet Benchmark</span>
+          </div>
+          <div class="bg-surface-container-lowest rounded-lg p-2 sm:p-2.5 flex flex-col justify-center items-center shadow-xs border border-outline-variant/20">
+            <span class="font-label-sm text-[9px] sm:text-[10px] text-secondary uppercase truncate">OOD Reject</span>
+            <span class="font-bold text-on-surface font-mono text-sm sm:text-headline-md my-0.5">100%</span>
+            <span class="font-label-sm text-[8px] sm:text-[9px] text-on-surface-variant leading-tight">Gatekeeper (τ* 0.68)</span>
+          </div>
+        </div>
+        <div class="pt-1 flex items-start gap-1.5">
+          <span class="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-0.5">info</span>
+          <p class="font-body-sm text-body-sm text-secondary leading-tight">
+            Curated clinical colonoscopy cohort (139 Colorectal Carcinoma, 29 Colon Diverticula). Evaluated under stratified train (117) / val (25) / test (26) splits. Preliminary academic research prototype — not approved for clinical diagnostic use.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- VIEW 2: IMAGE ANALYSIS WORKSPACE                                        -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <div id="view-analyze" class="view-panel flex-col w-full gap-space-lg">
+      <!-- Workspace Header -->
+      <div class="flex flex-col gap-1 px-1">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary text-on-primary">
+            <span class="material-symbols-outlined text-[16px]">biotech</span>
+          </span>
+          <h1 class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-semibold">Endoscopy Analysis Workspace</h1>
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Upload colonoscopy frame for domain validation, neural inference, and spatial saliency</p>
+      </div>
+
+      <!-- Domain Alert Banner (Shown on OOD or error) -->
+      <div id="analyze-alert-banner" class="hidden rounded-xl p-3.5 bg-error-container text-on-error-container border border-error/30 flex items-start gap-2.5 shadow-xs">
+        <span class="material-symbols-outlined text-[20px] text-error flex-shrink-0 mt-0.5">warning</span>
+        <div class="flex-1">
+          <p id="analyze-alert-title" class="font-headline-sm text-body-sm font-semibold text-error">Out-of-Domain Image Detected</p>
+          <p id="analyze-alert-msg" class="font-body-sm text-body-sm mt-0.5 text-on-error-container leading-relaxed">
+            The submitted image failed endoscopy-domain verification.
+          </p>
+        </div>
+      </div>
+
+      <!-- Responsive Workspace Layout (Desktop 2-col, Mobile 1-col) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+
+        <!-- Column Left: Image Preview & Dropzone (7 cols on lg) -->
+        <div class="lg:col-span-7 flex flex-col gap-space-md">
+          <div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-xs border border-outline-variant/30 flex flex-col gap-3">
+            
+            <!-- Dark Inspection Viewport Wrapper (#101713) -->
+            <div class="relative w-full rounded-lg overflow-hidden diagnostic-canvas">
+              <div class="relative aspect-square w-full flex items-center justify-center overflow-hidden">
+                <img id="workspace-preview-img" alt="Endoscopic frame sample" class="w-full h-full object-cover transition-transform duration-300" src="" />
+                
+                <!-- Live HUD Overlays on Dark Inverted Substrate -->
+                <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded bg-tertiary-container/90 text-on-tertiary backdrop-blur-sm border border-white/10">
+                  <span class="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
+                  <span class="font-label-sm text-label-sm tracking-wide text-primary-fixed uppercase font-medium">RGB Sensor Active</span>
+                </div>
+                
+                <div class="absolute top-2.5 right-2.5 flex items-center gap-1">
+                  <span class="px-2 py-1 rounded bg-tertiary-container/90 text-on-tertiary font-label-sm text-label-sm backdrop-blur-sm border border-white/10 font-mono">
+                    FOV 170°
+                  </span>
+                </div>
+
+                <!-- Crosshair Reticle Element -->
+                <div class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-30">
+                  <div class="w-20 h-20 border-t border-b border-l border-r border-dashed border-primary-fixed-dim rounded-full flex items-center justify-center">
+                    <div class="w-1.5 h-1.5 bg-primary-fixed rounded-full"></div>
+                  </div>
+                </div>
+
+                <!-- Bottom Telemetry Banner within Inverted Viewer -->
+                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-tertiary via-tertiary/85 to-transparent p-3 pt-8 flex items-end justify-between">
+                  <div class="min-w-0 pr-2">
+                    <p id="workspace-filename" class="font-label-md text-label-md text-surface-bright truncate font-medium font-mono">sample_colorectal_cancer.jpg</p>
+                    <div class="flex items-center gap-2 mt-0.5 font-mono">
+                      <span id="workspace-dim" class="font-label-sm text-label-sm text-secondary-fixed-dim">1024 × 1024 px</span>
+                      <span class="text-secondary-fixed-dim">•</span>
+                      <span id="workspace-filesize" class="font-label-sm text-label-sm text-secondary-fixed-dim">1.58 MB</span>
+                    </div>
+                  </div>
+                  <span id="workspace-status-badge" class="px-2.5 py-0.5 rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono">
+                    Validated
+                  </span>
+                </div>
+              </div>
+
+              <!-- Quick Action Bar -->
+              <div class="bg-surface-container-high p-2 flex items-center justify-between gap-1.5 sm:gap-2 border-t border-outline-variant/30">
+                <button id="btn-workspace-replace" type="button" class="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 sm:px-3 rounded-lg bg-surface-container-lowest text-primary font-headline-sm text-xs sm:text-body-sm shadow-xs hover:bg-surface active:scale-95 transition-all truncate">
+                  <span class="material-symbols-outlined text-[16px] flex-shrink-0">sync</span>
+                  <span class="truncate">Replace Image</span>
+                </button>
+                <button id="btn-workspace-remove" type="button" class="flex items-center justify-center gap-1 py-1.5 px-2.5 sm:px-3 rounded-lg bg-surface-container-lowest text-error font-body-sm text-xs sm:text-body-sm shadow-xs hover:bg-red-50 active:scale-95 transition-all flex-shrink-0">
+                  <span class="material-symbols-outlined text-[16px]">delete</span>
+                  <span>Remove</span>
+                </button>
+                <button id="btn-workspace-reset" type="button" class="flex items-center justify-center gap-1 py-1.5 px-2.5 sm:px-3 rounded-lg bg-surface-container-lowest text-secondary font-body-sm text-xs sm:text-body-sm shadow-xs hover:bg-surface active:scale-95 transition-all flex-shrink-0" title="Reset Workspace">
+                  <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                  <span>Reset</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Dropzone Box (Interactive Target) -->
+            <div id="workspace-dropzone" class="relative rounded-xl p-5 bg-surface-container-low border-2 border-dashed border-outline-variant/60 hover:border-primary transition-all duration-200 cursor-pointer text-center group">
+              <input id="workspace-file-input" type="file" accept="image/jpeg,image/png,image/jpg" class="hidden" />
+              <div class="flex flex-col items-center justify-center gap-1.5">
+                <div class="w-11 h-11 rounded-full bg-secondary-container flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
+                  <span class="material-symbols-outlined text-[24px]">add_a_photo</span>
+                </div>
+                <p class="font-headline-sm text-headline-sm text-on-surface mt-1 font-medium">Drag & drop frame or tap to browse</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant max-w-[280px]">Supports endoscopic capture (JPG, JPEG, PNG, up to 15MB)</p>
+                <button id="btn-browse-trigger" type="button" class="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-on-primary font-body-md text-body-sm font-medium shadow-xs hover:bg-primary-container active:scale-95 transition-all">
+                  <span class="material-symbols-outlined text-[18px]">folder_open</span>
+                  <span>Browse Image</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Preset Research Samples Selector -->
+            <div class="space-y-2 pt-1">
+              <div class="flex items-center justify-between">
+                <label class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Preloaded Benchmark Samples</label>
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Tap to inspect</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <!-- Cancer Sample Button -->
+                <button id="sample-cancer-btn" type="button" class="sample-select-btn flex items-center justify-between p-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-all text-left border border-outline-variant/30 active:scale-[0.99]">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-2.5 h-2.5 rounded-full bg-error flex-shrink-0"></span>
+                    <div class="truncate">
+                      <p class="font-headline-sm text-body-sm text-on-surface truncate font-semibold">Research Sample — Cancer</p>
+                      <p class="font-label-sm text-[10px] text-secondary truncate">Cecum frame • Paris 0-IIa</p>
+                    </div>
+                  </div>
+                  <span class="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">chevron_right</span>
+                </button>
+
+                <!-- Diverticula Sample Button -->
+                <button id="sample-diverticula-btn" type="button" class="sample-select-btn flex items-center justify-between p-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-all text-left border border-outline-variant/30 active:scale-[0.99]">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0"></span>
+                    <div class="truncate">
+                      <p class="font-headline-sm text-body-sm text-on-surface truncate font-semibold">Research Sample — Diverticula</p>
+                      <p class="font-label-sm text-[10px] text-secondary truncate">Sigmoid frame • Multiple orifices</p>
+                    </div>
+                  </div>
+                  <span class="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">chevron_right</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Academic Privacy & Handling Note -->
+            <div class="rounded-lg p-3 bg-surface-container flex items-start gap-2.5 border border-outline-variant/30">
+              <span class="material-symbols-outlined text-primary text-[18px] flex-shrink-0 mt-0.5">verified_user</span>
+              <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                <strong class="text-on-surface font-semibold">Privacy & De-identification:</strong> Images are processed in-memory for this academic session only and are never persisted or shared.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column Right: Architecture Selection & Settings (5 cols on lg) -->
+        <div class="lg:col-span-5 flex flex-col gap-space-md">
+          <div class="bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-outline-variant/30 flex flex-col gap-4">
+            
+            <!-- Architecture Model Selector Header -->
+            <div class="flex items-center justify-between">
+              <h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Neural Architecture</h2>
+              <span class="font-label-sm text-label-sm text-secondary uppercase font-semibold font-mono">PyTorch CPU/GPU</span>
+            </div>
+
+            <!-- Model Options Radios -->
+            <div class="flex flex-col gap-2" id="model-radios-group">
+              
+              <!-- DenseNet-121 (Recommended) -->
+              <label class="model-radio-card cursor-pointer rounded-lg p-3 bg-secondary-container/60 border-2 border-primary-container transition-all flex items-start gap-3">
+                <input type="radio" name="model_choice" value="densenet121" checked class="mt-1 accent-primary flex-shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="font-headline-sm text-headline-sm text-on-surface font-bold">DenseNet-121</span>
+                    <span class="px-1.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-label-sm text-[10px] font-semibold">Optimal</span>
+                  </div>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Dense connectivity with gradient preservation. Multi-scale feature extraction.</p>
+                  <div class="flex items-center gap-3 mt-1.5 text-[11px] font-mono text-secondary">
+                    <span>8.0M params</span>
+                    <span>•</span>
+                    <span>Macro-F1: 0.9328</span>
+                  </div>
+                </div>
+              </label>
+
+              <!-- ResNet-50 -->
+              <label class="model-radio-card cursor-pointer rounded-lg p-3 bg-surface-container-low border border-outline-variant/40 hover:border-outline-variant transition-all flex items-start gap-3">
+                <input type="radio" name="model_choice" value="resnet50" class="mt-1 accent-primary flex-shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="font-headline-sm text-headline-sm text-on-surface font-semibold">ResNet-50</span>
+                    <span class="px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-[10px]">Reference</span>
+                  </div>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Standard Residual Deep Network. Baseline clinical benchmark representation.</p>
+                  <div class="flex items-center gap-3 mt-1.5 text-[11px] font-mono text-secondary">
+                    <span>25.6M params</span>
+                    <span>•</span>
+                    <span>Macro-F1: 1.0000</span>
+                  </div>
+                </div>
+              </label>
+
+              <!-- EfficientNet-B0 -->
+              <label class="model-radio-card cursor-pointer rounded-lg p-3 bg-surface-container-low border border-outline-variant/40 hover:border-outline-variant transition-all flex items-start gap-3">
+                <input type="radio" name="model_choice" value="efficientnet_b0" class="mt-1 accent-primary flex-shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <span class="font-headline-sm text-headline-sm text-on-surface font-semibold">EfficientNet-B0</span>
+                    <span class="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-[10px]">Lightweight</span>
+                  </div>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Compound scaling mobile-optimized architecture for low-latency inference.</p>
+                  <div class="flex items-center gap-3 mt-1.5 text-[11px] font-mono text-secondary">
+                    <span>5.3M params</span>
+                    <span>•</span>
+                    <span>Macro-F1: 0.9328</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Grad-CAM Saliency Controls -->
+            <div class="pt-2 border-t border-outline-variant/30 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <label class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold">Grad-CAM Overlay Blending</label>
+                <span id="slider-opacity-val" class="font-label-sm text-label-sm font-mono text-primary font-bold">45%</span>
+              </div>
+              <input id="slider-opacity" type="range" min="0" max="100" value="45" class="w-full accent-primary-container h-2 bg-surface-container rounded-lg cursor-pointer" />
+              
+              <!-- Colormap Selector -->
+              <div class="flex items-center justify-between pt-1">
+                <span class="font-label-sm text-label-sm text-secondary">Attribution Colormap</span>
+                <div class="flex rounded-lg bg-surface-container p-1 gap-1" id="colormap-toggle-group">
+                  <button data-cmap="jet" class="cmap-btn px-2.5 py-1 rounded text-[11px] font-mono font-semibold bg-primary-container text-on-primary shadow-xs">Jet</button>
+                  <button data-cmap="turbo" class="cmap-btn px-2.5 py-1 rounded text-[11px] font-mono text-secondary hover:text-on-surface">Turbo</button>
+                  <button data-cmap="viridis" class="cmap-btn px-2.5 py-1 rounded text-[11px] font-mono text-secondary hover:text-on-surface">Viridis</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Primary Execution CTA Button -->
+            <div class="pt-2">
+              <button id="btn-run-analysis" type="button" class="w-full bg-primary-container text-on-primary py-3.5 px-4 rounded-lg font-headline-sm text-headline-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:bg-primary active:scale-[0.99] transition-all">
+                <span class="material-symbols-outlined text-[20px]" id="run-btn-icon">biotech</span>
+                <span id="run-btn-text">Run Saliency Analysis</span>
+              </button>
+              <p class="font-label-sm text-[11px] text-center text-secondary mt-2">
+                Executes domain gatekeeper $\tau^*=0.6800$, neural inference, and Grad-CAM
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- VIEW 3: ANALYSIS RESULTS & EXPLAINABILITY                               -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <div id="view-results" class="view-panel flex-col w-full gap-space-lg">
+      
+      <!-- Professional Empty State When No Analysis Has Been Run Yet -->
+      <div id="results-empty-state" class="py-16 text-center bg-surface-container-lowest rounded-xl border border-dashed border-outline-variant/40 flex flex-col items-center justify-center gap-3 p-6 my-4">
+        <div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center text-secondary mb-1">
+          <span class="material-symbols-outlined text-[36px]">biotech</span>
+        </div>
+        <h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">No Analyses Yet</h2>
+        <p class="font-body-md text-body-md text-secondary max-w-md">No real analysis has been performed yet in this session. Select an endoscopic frame or choose a preloaded benchmark sample to generate real-time neural inference, Grad-CAM saliency heatmaps, and diagnostic reports.</p>
+        <button id="btn-results-to-analyze" type="button" class="mt-3 px-5 py-2.5 rounded-lg bg-primary-container text-on-primary font-headline-sm text-body-sm shadow-xs hover:bg-primary active:scale-95 transition-all inline-flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+          <span>Go to Image Analysis Workspace</span>
+        </button>
+      </div>
+
+      <!-- Live Analysis Results Wrapper (Hidden Until Real Analysis Is Executed) -->
+      <div id="results-content-wrapper" class="hidden flex-col w-full gap-space-lg">
+        <!-- Header Metadata Strip -->
+        <div class="flex flex-col gap-space-sm bg-surface-container-low p-space-md rounded-xl shadow-xs border border-outline-variant/30">
+          <div class="flex flex-wrap items-center justify-between gap-space-xs">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-md text-label-md border border-outline-variant/30">
+              <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+              <span class="font-semibold">Domain Verified:</span>
+              <span id="res-domain-score" class="text-on-surface-variant font-mono">—</span>
+            </div>
+            <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-mono border border-outline-variant/30">
+              <span class="material-symbols-outlined text-[14px]">memory</span>
+              <span id="res-model-badge">—</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm px-1 font-mono">
+            <div class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">schedule</span>
+              <span id="res-timestamp">—</span>
+            </div>
+            <span id="res-run-id" class="text-secondary font-label-sm">—</span>
+          </div>
+        </div>
+
+      <!-- Results Grid (Desktop 2-col, Mobile 1-col) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+        
+        <!-- Saliency Viewer Column (7 cols on lg) -->
+        <div class="lg:col-span-7 flex flex-col gap-space-md">
+          <div class="flex flex-col gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-xs border border-outline-variant/30">
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col">
+                <span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Interpretability Layer</span>
+                <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Grad-CAM Spatial Saliency</h3>
+              </div>
+              <span id="res-target-layer-chip" class="px-2 py-0.5 rounded bg-surface-container text-primary font-mono text-[11px] font-semibold border border-outline-variant/30">
+                —
+              </span>
+            </div>
+
+            <!-- Viewport Mode Tabs -->
+            <div class="flex rounded-lg bg-surface-container p-1 gap-1" id="viewport-mode-tabs">
+              <button data-mode="overlay" class="mode-tab flex-1 py-1.5 rounded text-center font-label-sm text-label-sm font-semibold transition-all bg-primary-container text-on-primary shadow-xs">Overlay View</button>
+              <button data-mode="original" class="mode-tab flex-1 py-1.5 rounded text-center font-label-sm text-label-sm text-secondary hover:text-on-surface transition-all">Original Frame</button>
+              <button data-mode="heatmap" class="mode-tab flex-1 py-1.5 rounded text-center font-label-sm text-label-sm text-secondary hover:text-on-surface transition-all">Heatmap Only</button>
+            </div>
+
+            <!-- Dark Diagnostic Canvas (#101713) -->
+            <div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden diagnostic-canvas shadow-inner flex items-center justify-center select-none" id="saliency-viewport">
+              
+              <!-- Base Original Layer -->
+              <img id="res-base-img" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300" src="" alt="Clinical frame" />
+              
+              <!-- Heatmap Layer -->
+              <img id="res-heatmap-img" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 pointer-events-none" src="" alt="Heatmap" />
+
+              <!-- Overlay Layer -->
+              <img id="res-overlay-img" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 pointer-events-none" src="" alt="Overlay" />
+
+              <!-- Saliency Focus Reticle -->
+              <div id="saliency-reticle-box" class="absolute pointer-events-none transition-all duration-300 flex items-center justify-center" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                <div class="w-16 h-16 rounded-full border border-surface-bright/50 animate-reticle opacity-40"></div>
+                <div class="absolute w-10 h-10 rounded-full border border-dashed border-surface-bright/80 flex items-center justify-center">
+                  <span class="w-1.5 h-1.5 rounded-full bg-surface-bright shadow"></span>
+                </div>
+                <span id="reticle-coords-label" class="absolute -bottom-6 px-2 py-0.5 rounded reticle-badge text-surface-bright font-label-sm text-[10px] tracking-tight whitespace-nowrap font-mono">
+                  Peak Attention
+                </span>
+              </div>
+
+              <!-- Floating Zoom Toolbar -->
+              <div class="absolute top-3 right-3 flex items-center gap-1 bg-surface-container-lowest/85 backdrop-blur-md px-1.5 py-1 rounded-lg shadow-xs border border-outline-variant/30">
+                <button id="btn-zoom-in" aria-label="Zoom in" class="w-7 h-7 flex items-center justify-center text-on-surface hover:text-primary transition-colors" title="Zoom In">
+                  <span class="material-symbols-outlined text-[16px]">zoom_in</span>
+                </button>
+                <button id="btn-zoom-out" aria-label="Zoom out" class="w-7 h-7 flex items-center justify-center text-on-surface hover:text-primary transition-colors" title="Zoom Out">
+                  <span class="material-symbols-outlined text-[16px]">zoom_out</span>
+                </button>
+                <button id="btn-zoom-reset" aria-label="Reset zoom" class="w-7 h-7 flex items-center justify-center text-on-surface hover:text-primary transition-colors" title="Reset Frame">
+                  <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                </button>
+              </div>
+
+              <!-- Bottom Spectrum Legend Overlay -->
+              <div class="absolute bottom-3 left-2 right-2 sm:left-3 sm:right-3 flex items-center justify-between gap-1 px-2.5 py-1.5 rounded-lg bg-tertiary/90 backdrop-blur-md border border-white/10">
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                  <span class="font-label-sm text-[9px] sm:text-[10px] text-surface-variant font-medium">Low</span>
+                  <div class="w-16 sm:w-24 h-2 rounded-full overflow-hidden" style="background: linear-gradient(to right, #0284c7, #06b6d4, #10b981, #f59e0b, #dc2626);"></div>
+                  <span class="font-label-sm text-[9px] sm:text-[10px] text-surface-variant font-medium">Peak</span>
+                </div>
+                <span id="spectrum-layer-tag" class="hidden sm:inline-block font-label-sm text-[10px] text-primary-fixed-dim font-mono truncate max-w-[140px]">Grad-CAM</span>
+              </div>
+            </div>
+
+            <!-- Heatmap Opacity Controls -->
+            <div class="flex flex-col gap-2 pt-1">
+              <div class="flex items-center justify-between font-label-md text-label-md">
+                <span class="text-secondary font-medium">Interactive Heatmap Blend Alpha</span>
+                <span id="res-alpha-display" class="font-mono text-primary font-bold">45%</span>
+              </div>
+              <input id="res-alpha-slider" type="range" min="0" max="100" value="45" class="w-full accent-primary-container h-1.5 bg-surface-container rounded-lg cursor-pointer" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Findings & Diagnosis Column (5 cols on lg) -->
+        <div class="lg:col-span-5 flex flex-col gap-space-md">
+          <!-- Primary Classification Card -->
+          <div class="flex flex-col gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-xs border border-outline-variant/30">
+            <div class="flex flex-col gap-space-xs">
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Primary Attribution</span>
+                <div class="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-mono">
+                  <span class="w-1.5 h-1.5 rounded-full bg-primary-fixed"></span>
+                  <span id="res-confidence-pill">— Confidence</span>
+                </div>
+              </div>
+              <h2 id="res-pred-title" class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">
+                Awaiting Inference
+              </h2>
+              <p id="res-pred-desc" class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                Inference score, not a definitive clinical diagnosis. Neural activations will display following model execution.
+              </p>
+            </div>
+
+            <!-- Probability Breakdown Bars -->
+            <div class="flex flex-col gap-space-md pt-space-xs border-t border-outline-variant/30">
+              <!-- Item 1: Cancer -->
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center justify-between font-label-md text-label-md">
+                  <span class="font-medium text-on-surface flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-primary"></span>
+                    Colorectal Carcinoma
+                  </span>
+                  <span id="prob-val-cancer" class="font-semibold text-primary font-label-lg text-label-lg font-mono">0.0%</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+                  <div id="prob-bar-cancer" class="h-full bg-primary rounded-full transition-all duration-700 ease-out" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Item 2: Diverticula -->
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center justify-between font-label-md text-label-md">
+                  <span class="text-on-surface-variant flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                    Colon Diverticula
+                  </span>
+                  <span id="prob-val-diverticula" class="text-secondary font-label-md text-label-md font-mono">0.0%</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+                  <div id="prob-bar-diverticula" class="h-full bg-secondary-fixed-dim rounded-full transition-all duration-700 ease-out" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Morphological Observations & Paris Checklist -->
+            <div class="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
+              <span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold">Morphological Correlates</span>
+              <ul class="text-body-sm text-on-surface-variant space-y-1.5">
+                <li class="flex items-start gap-2">
+                  <span class="material-symbols-outlined text-[16px] text-primary flex-shrink-0 mt-0.5">check_circle</span>
+                  <span>Neural saliency focal point aligns with mucosal lesion boundaries.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="material-symbols-outlined text-[16px] text-primary flex-shrink-0 mt-0.5">check_circle</span>
+                  <span>Endoscopy domain validator confirms high specificity ($\Delta \tau > 0.12$).</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Action Buttons: PDF Report, Multi-Model Compare, and Start New Analysis -->
+            <div class="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
+              <button id="btn-download-pdf" type="button" class="w-full bg-primary text-on-primary py-3 px-4 rounded-lg font-headline-sm text-headline-sm font-semibold flex items-center justify-center gap-2 shadow-xs hover:bg-primary-container active:scale-[0.99] transition-all">
+                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                <span>Generate Clinical PDF Report</span>
+              </button>
+              <button id="btn-compare-from-results" type="button" class="w-full bg-surface-container text-primary py-2.5 px-4 rounded-lg font-headline-sm text-body-sm font-medium flex items-center justify-center gap-2 border border-outline-variant/40 hover:bg-surface-container-high active:scale-[0.99] transition-all">
+                <span class="material-symbols-outlined text-[18px]">compare_arrows</span>
+                <span>Compare with All 3 Models</span>
+              </button>
+              <button id="btn-new-analysis" type="button" class="w-full bg-surface-container-low text-secondary hover:text-on-surface py-2.5 px-4 rounded-lg font-headline-sm text-body-sm font-medium flex items-center justify-center gap-2 border border-outline-variant/30 hover:bg-surface-container active:scale-[0.99] transition-all">
+                <span class="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+                <span>Analyze Another Image</span>
+              </button>
+            </div>
+
+            <!-- Academic Research Prototype Disclaimer Note -->
+            <div class="mt-2 p-3 rounded-lg bg-surface-container-low border border-outline-variant/30 text-secondary flex items-start gap-2">
+              <span class="material-symbols-outlined text-[16px] text-primary flex-shrink-0 mt-0.5">verified_user</span>
+              <p class="font-body-sm text-[11px] leading-relaxed">
+                <strong class="text-on-surface font-semibold">Research Rigor:</strong> Predictions represent experimental neural attributions and must NOT be used as standalone clinical diagnosis. Grad-CAM illustrates convolutional activation patterns, not causal pathology.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- VIEW 4: MULTI-MODEL COMPARATIVE INFERENCE                               -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <div id="view-models" class="view-panel flex-col w-full gap-space-lg">
+      
+      <!-- Title & Context Area -->
+      <section class="flex items-center justify-between flex-wrap gap-2 px-0.5">
+        <div class="flex flex-col gap-1.5 min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm tracking-wider uppercase font-mono">Frame In Situ</span>
+            <span class="flex items-center gap-1 font-label-sm text-label-sm text-secondary font-mono">
+              <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+              Synchronized Run
+            </span>
+          </div>
+          <h1 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">Multi-Model Comparative Inference</h1>
+          <p class="font-body-sm text-body-sm text-secondary leading-relaxed">Side-by-side evaluation of ResNet-50, DenseNet-121, and EfficientNet-B0 on the current frame.</p>
+        </div>
+        <button id="btn-rerun-compare" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-primary font-headline-sm text-body-sm font-medium border border-outline-variant/40 shadow-xs active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[18px]" id="rerun-compare-icon">sync</span>
+          <span id="rerun-compare-text">Re-run Comparison</span>
+        </button>
+      </section>
+
+      <!-- Consensus Banner -->
+      <section class="bg-primary-container rounded-xl p-4 shadow-xs text-on-primary border border-primary/20">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-lg bg-surface-container-highest/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="material-symbols-outlined text-inverse-primary text-[22px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-2">
+              <span id="compare-consensus-title" class="font-headline-sm text-headline-sm font-semibold tracking-tight text-surface-container-lowest">Comparative Consensus</span>
+            </div>
+            <p id="compare-consensus-desc" class="font-body-sm text-body-sm text-on-primary-container mt-0.5 leading-relaxed">
+              Evaluating current endoscopic frame across ResNet-50, DenseNet-121, and EfficientNet-B0 architectures.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Grad-CAM Saliency Comparative Thumbnails Strip -->
+      <section class="flex flex-col gap-2">
+        <div class="flex items-center justify-between px-0.5">
+          <span class="font-label-md text-label-md uppercase tracking-wider text-secondary font-semibold">Grad-CAM Attribution Footprints</span>
+          <span class="font-label-sm text-label-sm text-primary-container font-semibold font-mono">Normalized Jet colormap</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          
+          <!-- Thumbnail 1: DenseNet-121 -->
+          <div class="flex flex-col gap-2 p-2.5 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
+            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas">
+              <img id="footprint-densenet" class="w-full h-full object-cover" src="" alt="DenseNet footprint" />
+              <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-tertiary/90 text-surface-container-lowest font-label-sm text-label-sm font-mono backdrop-blur-xs border border-white/10">DenseNet</span>
+            </div>
+            <div class="flex flex-col px-0.5">
+              <span class="font-label-sm text-label-sm font-bold text-on-surface truncate">features.denseblock4</span>
+              <span class="font-label-sm text-[11px] text-secondary truncate">Ulceration margin</span>
+            </div>
+          </div>
+
+          <!-- Thumbnail 2: ResNet-50 -->
+          <div class="flex flex-col gap-2 p-2.5 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
+            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas">
+              <img id="footprint-resnet" class="w-full h-full object-cover" src="" alt="ResNet footprint" />
+              <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-tertiary/90 text-surface-container-lowest font-label-sm text-label-sm font-mono backdrop-blur-xs border border-white/10">ResNet-50</span>
+            </div>
+            <div class="flex flex-col px-0.5">
+              <span class="font-label-sm text-label-sm font-bold text-on-surface truncate">layer4[-1]</span>
+              <span class="font-label-sm text-[11px] text-secondary truncate">Central lesion</span>
+            </div>
+          </div>
+
+          <!-- Thumbnail 3: EfficientNet-B0 -->
+          <div class="flex flex-col gap-2 p-2.5 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
+            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas">
+              <img id="footprint-efficientnet" class="w-full h-full object-cover" src="" alt="EfficientNet footprint" />
+              <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-tertiary/90 text-surface-container-lowest font-label-sm text-label-sm font-mono backdrop-blur-xs border border-white/10">EffNet-B0</span>
+            </div>
+            <div class="flex flex-col px-0.5">
+              <span class="font-label-sm text-label-sm font-bold text-on-surface truncate">features[-1]</span>
+              <span class="font-label-sm text-[11px] text-secondary truncate">Vascular edge</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Comparative Diagnostic Cards (Stacked / Grid) -->
+      <section class="flex flex-col gap-3">
+        <div class="flex items-center justify-between px-0.5">
+          <span class="font-label-md text-label-md uppercase tracking-wider text-secondary font-semibold">Inference Diagnostics</span>
+          <span class="font-label-sm text-label-sm text-secondary font-mono">Sorted by Macro-F1</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          
+          <!-- Card 1: DenseNet-121 -->
+          <div class="flex flex-col bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-outline-variant/30 gap-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex flex-col min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-headline-sm text-headline-sm font-semibold text-on-surface">DenseNet-121</span>
+                  <span class="px-1.5 py-0.5 rounded bg-primary-container text-surface-container-lowest font-label-sm text-[10px] font-mono">Primary</span>
+                </div>
+                <span class="font-body-sm text-body-sm text-secondary truncate">Dense gradient reuse</span>
+              </div>
+              <div class="flex flex-col items-end flex-shrink-0 font-mono">
+                <span id="compare-conf-densenet" class="font-label-lg text-label-lg font-bold text-primary-container">—</span>
+                <span id="compare-pred-densenet" class="font-label-sm text-label-sm text-secondary">Standby</span>
+              </div>
+            </div>
+            <div class="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
+              <div id="compare-bar-densenet" class="h-full bg-primary-container rounded-full" style="width: 0%;"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1 font-mono">
+              <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
+                <span class="font-label-sm text-label-sm text-secondary">Target Layer</span>
+                <span class="font-label-md text-label-md font-semibold text-on-surface truncate">denseblock4</span>
+              </div>
+              <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
+                <span class="font-label-sm text-label-sm text-secondary">Latency</span>
+                <span id="compare-lat-densenet" class="font-label-md text-label-md font-semibold text-on-surface">—</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5 text-on-surface-variant bg-surface-container-low/70 rounded-lg p-2">
+              <span class="material-symbols-outlined text-[16px] text-primary-container flex-shrink-0 mt-0.5">center_focus_strong</span>
+              <span class="font-body-sm text-body-sm"><strong class="text-on-surface font-medium">Focus:</strong> Concentrated mucosal margin.</span>
+            </div>
+          </div>
+
+          <!-- Card 2: ResNet-50 -->
+          <div class="flex flex-col bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-outline-variant/30 gap-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex flex-col min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-headline-sm text-headline-sm font-semibold text-on-surface">ResNet-50</span>
+                  <span class="px-1.5 py-0.5 rounded bg-surface-container text-on-secondary-container font-label-sm text-[10px] font-mono">Reference</span>
+                </div>
+                <span class="font-body-sm text-body-sm text-secondary truncate">Deep residual skips</span>
+              </div>
+              <div class="flex flex-col items-end flex-shrink-0 font-mono">
+                <span id="compare-conf-resnet" class="font-label-lg text-label-lg font-bold text-primary-container">—</span>
+                <span id="compare-pred-resnet" class="font-label-sm text-label-sm text-secondary">Standby</span>
+              </div>
+            </div>
+            <div class="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
+              <div id="compare-bar-resnet" class="h-full bg-primary-container/80 rounded-full" style="width: 0%;"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1 font-mono">
+              <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
+                <span class="font-label-sm text-label-sm text-secondary">Target Layer</span>
+                <span class="font-label-md text-label-md font-semibold text-on-surface truncate">layer4[-1]</span>
+              </div>
+              <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
+                <span class="font-label-sm text-label-sm text-secondary">Latency</span>
+                <span id="compare-lat-resnet" class="font-label-md text-label-md font-semibold text-on-surface">—</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5 text-on-surface-variant bg-surface-container-low/70 rounded-lg p-2">
+              <span class="material-symbols-outlined text-[16px] text-primary-container flex-shrink-0 mt-0.5">center_focus_strong</span>
+              <span class="font-body-sm text-body-sm"><strong class="text-on-surface font-medium">Focus:</strong> Broad lesion central bulk.</span>
+            </div>
+          </div>
+
+          <!-- Card 3: EfficientNet-B0 -->
+          <div class="flex flex-col bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-outline-variant/30 gap-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex flex-col min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-headline-sm text-headline-sm font-semibold text-on-surface">EfficientNet-B0</span>
+                  <span class="px-1.5 py-0.5 rounded bg-surface-container text-on-secondary-container font-label-sm text-[10px] font-mono">Lightweight</span>
+                </div>
+                <span class="font-body-sm text-body-sm text-secondary truncate">Compound scaling</span>
+              </div>
+              <div class="flex flex-col items-end flex-shrink-0 font-mono">
+                <span id="compare-conf-efficientnet" class="font-label-lg text-label-lg font-bold text-primary-container">—</span>
+                <span id="compare-pred-efficientnet" class="font-label-sm text-label-sm text-secondary">Standby</span>
+              </div>
+            </div>
+            <div class="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
+              <div id="compare-bar-efficientnet" class="h-full bg-primary-container/80 rounded-full" style="width: 0%;"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1 font-mono">
+              <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
+                <span class="font-label-sm text-label-sm text-secondary">Target Layer</span>
+                <span class="font-label-md text-label-md font-semibold text-on-surface truncate">features[-1]</span>
+              </div>
+              <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
+                <span class="font-label-sm text-label-sm text-secondary">Latency</span>
+                <span id="compare-lat-efficientnet" class="font-label-md text-label-md font-semibold text-on-surface">—</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5 text-on-surface-variant bg-surface-container-low/70 rounded-lg p-2">
+              <span class="material-symbols-outlined text-[16px] text-primary-container flex-shrink-0 mt-0.5">center_focus_strong</span>
+              <span class="font-body-sm text-body-sm"><strong class="text-on-surface font-medium">Focus:</strong> Microvascular periphery.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Academic Benchmark Cross-Validation Table -->
+      <section class="bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-outline-variant/30 flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Clinical Study Benchmark Matrix</h3>
+          <span class="font-label-sm text-label-sm text-secondary font-mono">GastroVision Cohort</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left font-mono text-body-sm">
+            <thead>
+              <tr class="border-b border-outline-variant/30 text-secondary font-semibold text-[11px] uppercase tracking-wider">
+                <th class="py-2.5 px-3">Architecture</th>
+                <th class="py-2.5 px-3">Parameters</th>
+                <th class="py-2.5 px-3">Test Acc</th>
+                <th class="py-2.5 px-3">Macro-F1</th>
+                <th class="py-2.5 px-3">ROC-AUC</th>
+                <th class="py-2.5 px-3">Recall (Divert)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/20 text-[13px]">
+              <tr class="hover:bg-surface-container-low/50">
+                <td class="py-2.5 px-3 font-bold text-on-surface font-sans">DenseNet-121</td>
+                <td class="py-2.5 px-3 text-secondary">8.0M</td>
+                <td class="py-2.5 px-3 font-semibold text-primary">96.15%</td>
+                <td class="py-2.5 px-3 font-semibold text-primary">0.9328</td>
+                <td class="py-2.5 px-3">1.0000</td>
+                <td class="py-2.5 px-3">80.0%</td>
+              </tr>
+              <tr class="hover:bg-surface-container-low/50">
+                <td class="py-2.5 px-3 font-bold text-on-surface font-sans">ResNet-50</td>
+                <td class="py-2.5 px-3 text-secondary">25.6M</td>
+                <td class="py-2.5 px-3 font-semibold text-primary">100.0%</td>
+                <td class="py-2.5 px-3 font-semibold text-primary">1.0000</td>
+                <td class="py-2.5 px-3">1.0000</td>
+                <td class="py-2.5 px-3">100.0%</td>
+              </tr>
+              <tr class="hover:bg-surface-container-low/50">
+                <td class="py-2.5 px-3 font-bold text-on-surface font-sans">EfficientNet-B0</td>
+                <td class="py-2.5 px-3 text-secondary">5.3M</td>
+                <td class="py-2.5 px-3 font-semibold text-primary">96.15%</td>
+                <td class="py-2.5 px-3 font-semibold text-primary">0.9328</td>
+                <td class="py-2.5 px-3">0.9333</td>
+                <td class="py-2.5 px-3">80.0%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- VIEW 5: ABOUT / ACADEMIC RIGOR & ARCHITECTURE                           -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <div id="view-about" class="view-panel flex-col w-full gap-space-lg">
+      <section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-xs border border-outline-variant/30 flex flex-col gap-space-md">
+        <div class="flex items-center gap-space-xs">
+          <span class="w-2 h-2 rounded-full bg-primary-container"></span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Clinical Precision & Academic Rigor</span>
+        </div>
+        <h1 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">
+          About ColonVision AI
+        </h1>
+        <p class="font-body-md text-body-md text-secondary leading-relaxed">
+          ColonVision AI is an explainable deep learning research platform specifically engineered for the differential classification of <strong>Colorectal Cancer</strong> and <strong>Diverticular Disease</strong> from colonoscopic video frames.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md pt-space-xs">
+          <!-- Pillar 1 -->
+          <div class="p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-primary font-bold">
+              <span class="material-symbols-outlined text-[20px]">shield</span>
+              <h3 class="font-headline-sm text-headline-sm">Calibrated OOD Protection</h3>
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary leading-relaxed">
+              Before inference, all inputs pass through an Endoscopy Domain Gatekeeper trained on cosine similarity feature profiles against calibrated endoscopic embeddings ($\tau^* = 0.6800$). Non-endoscopic imagery (passports, documents, selfies) is rejected automatically with 100% specificity.
+            </p>
+          </div>
+
+          <!-- Pillar 2 -->
+          <div class="p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-primary font-bold">
+              <span class="material-symbols-outlined text-[20px]">visibility</span>
+              <h3 class="font-headline-sm text-headline-sm">Explainability via Grad-CAM</h3>
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary leading-relaxed">
+              Neural decision attribution is rendered using Gradient-weighted Class Activation Mapping (Grad-CAM) hooked to the final convolutional block of each respective architecture (`layer4[-1]`, `features.denseblock4`, and `features[-1]`).
+            </p>
+          </div>
+
+          <!-- Pillar 3 -->
+          <div class="p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-primary font-bold">
+              <span class="material-symbols-outlined text-[20px]">dataset</span>
+              <h3 class="font-headline-sm text-headline-sm">GastroVision Dataset Training</h3>
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary leading-relaxed">
+              Models are fine-tuned on clinical colonoscopy frames with standard normalization, stratified patient splits, and cross-entropy optimization.
+            </p>
+          </div>
+
+          <!-- Pillar 4 -->
+          <div class="p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-primary font-bold">
+              <span class="material-symbols-outlined text-[20px]">description</span>
+              <h3 class="font-headline-sm text-headline-sm">Automated PDF Documentation</h3>
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary leading-relaxed">
+              Every inference session can be compiled into a standardized research PDF document containing original frames, saliency heatmaps, probability confidence intervals, domain validation metrics, and mandatory disclaimers.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-amber-900 flex items-start gap-2.5 mt-2">
+          <span class="material-symbols-outlined text-amber-700 text-[20px] flex-shrink-0 mt-0.5">gavel</span>
+          <p class="font-body-sm text-body-sm leading-relaxed">
+            <strong>Mandatory Academic Disclaimer:</strong> This system is a research prototype developed for computational pathology and endoscopic image analysis studies. It is NOT certified as a medical device and must never be used as a primary diagnostic tool or for clinical therapeutic decisions.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- NATURAL DOCUMENT FOOTER                                                   -->
+  <!-- ========================================================================= -->
+  <footer class="mt-auto w-full py-4 px-4 bg-surface-container-low border-t border-outline-variant/30 text-secondary">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-primary-container"></span>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">
+          ColonVision AI • Academic Research Prototype • Not for Clinical Diagnosis or Therapeutic Decisions
+        </p>
+      </div>
+      <p class="font-mono text-label-sm text-secondary">
+        GastroVision Benchmark Cohort • PyTorch CPU/CUDA
+      </p>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- MOBILE BOTTOM NAVIGATION (Active only on mobile / tablet < lg)             -->
+  <!-- ========================================================================= -->
+  <nav id="mobile-bottom-nav" aria-label="Mobile Navigation" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/30 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] pb-safe">
+    <div class="flex items-center justify-around h-16 max-w-lg mx-auto px-1">
+      <button data-target="overview" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 h-full py-1 text-primary-container font-semibold transition-colors active:scale-95">
+        <span class="material-symbols-outlined text-[22px]">dashboard</span>
+        <span class="font-label-sm text-[10px] mt-0.5 tracking-tight">Overview</span>
+      </button>
+      <button data-target="analyze" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 h-full py-1 text-secondary hover:text-on-surface transition-colors active:scale-95">
+        <span class="material-symbols-outlined text-[22px]">biotech</span>
+        <span class="font-label-sm text-[10px] mt-0.5 tracking-tight">Analyze</span>
+      </button>
+      <button data-target="results" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 h-full py-1 text-secondary hover:text-on-surface transition-colors active:scale-95">
+        <span class="material-symbols-outlined text-[22px]">insights</span>
+        <span class="font-label-sm text-[10px] mt-0.5 tracking-tight">Results</span>
+      </button>
+      <button data-target="models" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 h-full py-1 text-secondary hover:text-on-surface transition-colors active:scale-95">
+        <span class="material-symbols-outlined text-[22px]">hub</span>
+        <span class="font-label-sm text-[10px] mt-0.5 tracking-tight">Models</span>
+      </button>
+      <button data-target="about" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 h-full py-1 text-secondary hover:text-on-surface transition-colors active:scale-95">
+        <span class="material-symbols-outlined text-[22px]">info</span>
+        <span class="font-label-sm text-[10px] mt-0.5 tracking-tight">About</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- App Main Logic Script -->
+</body>
+</html>

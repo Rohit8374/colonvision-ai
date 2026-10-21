@@ -1,0 +1,960 @@
+/**
+ * ColonVision AI — Clinical Research Workstation Controller
+ * ==========================================================
+ * Orchestrates navigation, interactive diagnostic canvases, real-time
+ * Grad-CAM saliency blending, multi-model comparisons, and automated
+ * ReportLab PDF generation via the FastAPI medical backend.
+ */
+
+// Application State
+const state = {
+  currentView: 'overview',
+  selectedModel: 'densenet121',
+  selectedSampleId: 'cancer',
+  selectedFile: null,
+  selectedColormap: 'jet',
+  blendAlpha: 0.45,
+  samples: {},
+  lastAnalysis: null,
+  lastComparison: null,
+  zoomLevel: 1.0,
+  viewportMode: 'overlay',
+};
+
+// Model Config Metadata
+const MODEL_CONFIGS = {
+  densenet121: {
+    name: 'DenseNet-121',
+    params: '8.0M',
+    f1: '0.9328',
+    targetLayer: 'features.denseblock4',
+    badge: 'Optimal',
+  },
+  resnet50: {
+    name: 'ResNet-50',
+    params: '25.6M',
+    f1: '1.0000',
+    targetLayer: 'layer4[-1]',
+    badge: 'Reference',
+  },
+  efficientnet_b0: {
+    name: 'EfficientNet-B0',
+    params: '5.3M',
+    f1: '0.9328',
+    targetLayer: 'features[-1]',
+    badge: 'Lightweight',
+  },
+};
+
+// ── DOM Elements ─────────────────────────────────────────────────────────────
+const elements = {
+  viewTitleText: document.getElementById('view-title-text'),
+  workspacePreviewImg: document.getElementById('workspace-preview-img'),
+  workspaceFilename: document.getElementById('workspace-filename'),
+  workspaceDim: document.getElementById('workspace-dim'),
+  workspaceFilesize: document.getElementById('workspace-filesize'),
+  workspaceStatusBadge: document.getElementById('workspace-status-badge'),
+  workspaceDropzone: document.getElementById('workspace-dropzone'),
+  workspaceFileInput: document.getElementById('workspace-file-input'),
+  analyzeAlertBanner: document.getElementById('analyze-alert-banner'),
+  analyzeAlertTitle: document.getElementById('analyze-alert-title'),
+  analyzeAlertMsg: document.getElementById('analyze-alert-msg'),
+  sliderOpacity: document.getElementById('slider-opacity'),
+  sliderOpacityVal: document.getElementById('slider-opacity-val'),
+  btnRunAnalysis: document.getElementById('btn-run-analysis'),
+  runBtnIcon: document.getElementById('run-btn-icon'),
+  runBtnText: document.getElementById('run-btn-text'),
+  btnDownloadPdf: document.getElementById('btn-download-pdf'),
+  overviewHistoryContainer: document.getElementById('overview-history-container'),
+  
+  // Results Elements
+  resDomainScore: document.getElementById('res-domain-score'),
+  resModelBadge: document.getElementById('res-model-badge'),
+  resTimestamp: document.getElementById('res-timestamp'),
+  resRunId: document.getElementById('res-run-id'),
+  resTargetLayerChip: document.getElementById('res-target-layer-chip'),
+  resPredTitle: document.getElementById('res-pred-title'),
+  resPredDesc: document.getElementById('res-pred-desc'),
+  resConfidencePill: document.getElementById('res-confidence-pill'),
+  probValCancer: document.getElementById('prob-val-cancer'),
+  probBarCancer: document.getElementById('prob-bar-cancer'),
+  probValDiverticula: document.getElementById('prob-val-diverticula'),
+  probBarDiverticula: document.getElementById('prob-bar-diverticula'),
+  resBaseImg: document.getElementById('res-base-img'),
+  resHeatmapImg: document.getElementById('res-heatmap-img'),
+  resOverlayImg: document.getElementById('res-overlay-img'),
+  saliencyReticleBox: document.getElementById('saliency-reticle-box'),
+  reticleCoordsLabel: document.getElementById('reticle-coords-label'),
+  spectrumLayerTag: document.getElementById('spectrum-layer-tag'),
+  resAlphaSlider: document.getElementById('res-alpha-slider'),
+  resAlphaDisplay: document.getElementById('res-alpha-display'),
+  
+  // Comparison Elements
+  compareConsensusTitle: document.getElementById('compare-consensus-title'),
+  compareConsensusDesc: document.getElementById('compare-consensus-desc'),
+  footprintDensenet: document.getElementById('footprint-densenet'),
+  footprintResnet: document.getElementById('footprint-resnet'),
+  footprintEfficientnet: document.getElementById('footprint-efficientnet'),
+  compareConfDensenet: document.getElementById('compare-conf-densenet'),
+  comparePredDensenet: document.getElementById('compare-pred-densenet'),
+  compareBarDensenet: document.getElementById('compare-bar-densenet'),
+  compareLatDensenet: document.getElementById('compare-lat-densenet'),
+  compareConfResnet: document.getElementById('compare-conf-resnet'),
+  comparePredResnet: document.getElementById('compare-pred-resnet'),
+  compareBarResnet: document.getElementById('compare-bar-resnet'),
+  compareLatResnet: document.getElementById('compare-lat-resnet'),
+  compareConfEfficientnet: document.getElementById('compare-conf-efficientnet'),
+  comparePredEfficientnet: document.getElementById('compare-pred-efficientnet'),
+  compareBarEfficientnet: document.getElementById('compare-bar-efficientnet'),
+  compareLatEfficientnet: document.getElementById('compare-lat-efficientnet'),
+};
+
+// ── Navigation Router ────────────────────────────────────────────────────────
+function switchView(viewName) {
+  state.currentView = viewName;
+
+  // Hide all view panels
+  document.querySelectorAll('.view-panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+
+  // Activate target panel
+  const targetPanel = document.getElementById(`view-${viewName}`);
+  if (targetPanel) {
+    targetPanel.classList.add('active');
+  }
+
+  // Update Breadcrumb & Header Title
+  const titles = {
+    overview: 'Overview',
+    analyze: 'Analyze Workspace',
+    results: 'Results & Explainability',
+    models: 'Comparative Models',
+    about: 'Academic Rigor',
+  };
+  if (elements.viewTitleText) {
+    elements.viewTitleText.textContent = titles[viewName] || 'Clinical Platform';
+  }
+
+  // Update Clinical Drawer Navigation Items
+  document.querySelectorAll('.drawer-nav-item').forEach(btn => {
+    if (btn.dataset.drawerTarget === viewName) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Update Desktop Navigation Bar Active State
+  document.querySelectorAll('.desktop-nav-btn').forEach(btn => {
+    if (btn.dataset.target === viewName) {
+      btn.classList.add('text-primary-container', 'bg-surface-container-lowest', 'shadow-xs');
+      btn.classList.remove('text-secondary');
+    } else {
+      btn.classList.remove('text-primary-container', 'bg-surface-container-lowest', 'shadow-xs');
+      btn.classList.add('text-secondary');
+    }
+  });
+
+  // Update Mobile Navigation Bar Active State
+  document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+    if (btn.dataset.target === viewName) {
+      btn.classList.add('active', 'text-primary-container');
+      btn.classList.remove('text-secondary');
+    } else {
+      btn.classList.remove('active', 'text-primary-container');
+      btn.classList.add('text-secondary');
+    }
+  });
+
+  // Handle Results View Empty State
+  if (viewName === 'results') {
+    const emptyState = document.getElementById('results-empty-state');
+    const contentWrapper = document.getElementById('results-content-wrapper');
+    if (!state.lastAnalysis) {
+      emptyState?.classList.remove('hidden');
+      contentWrapper?.classList.add('hidden');
+      contentWrapper?.classList.remove('flex');
+    } else {
+      emptyState?.classList.add('hidden');
+      contentWrapper?.classList.remove('hidden');
+      contentWrapper?.classList.add('flex');
+    }
+  }
+
+  // If entering comparative models and an image is ready, run comparison automatically
+  if (viewName === 'models') {
+    triggerMultiModelComparison();
+  }
+
+  // Smooth scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Preloaded Research Samples ───────────────────────────────────────────────
+async function loadSamples() {
+  try {
+    const res = await fetch('/api/samples');
+    if (!res.ok) throw new Error('Failed to load samples');
+    const data = await res.json();
+    data.samples.forEach(s => {
+      state.samples[s.id] = s;
+    });
+
+    // Set default sample (Cancer)
+    if (state.samples.cancer) {
+      applySample('cancer');
+    }
+  } catch (err) {
+    console.error('Samples loading error:', err);
+  }
+}
+
+function applySample(sampleId) {
+  const sample = state.samples[sampleId];
+  if (!sample) return;
+
+  state.selectedSampleId = sampleId;
+  state.selectedFile = null;
+
+  // Highlight active sample button
+  const cancerBtn = document.getElementById('sample-cancer-btn');
+  const divertBtn = document.getElementById('sample-diverticula-btn');
+  if (cancerBtn && divertBtn) {
+    if (sampleId === 'cancer') {
+      cancerBtn.classList.add('sample-active');
+      divertBtn.classList.remove('sample-active');
+    } else {
+      divertBtn.classList.add('sample-active');
+      cancerBtn.classList.remove('sample-active');
+    }
+  }
+
+  elements.workspacePreviewImg.src = sample.data_uri;
+  elements.workspaceFilename.textContent = sample.filename;
+  elements.workspaceDim.textContent = sample.dimensions;
+  elements.workspaceFilesize.textContent = sample.filesize;
+  elements.workspaceStatusBadge.textContent = 'Validated';
+  elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
+
+  hideAlert();
+}
+
+// ── Dropzone & File Upload ───────────────────────────────────────────────────
+function initDropzone() {
+  const dropzone = elements.workspaceDropzone;
+  const fileInput = elements.workspaceFileInput;
+  const browseTrigger = document.getElementById('btn-browse-trigger');
+
+  if (browseTrigger) {
+    browseTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileInput.click();
+    });
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('border-primary', 'bg-surface-container');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('border-primary', 'bg-surface-container');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('border-primary', 'bg-surface-container');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleUserFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files[0]) {
+      handleUserFile(fileInput.files[0]);
+    }
+  });
+
+  // Replace / Remove / Reset buttons
+  document.getElementById('btn-workspace-replace').addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  document.getElementById('btn-workspace-remove').addEventListener('click', () => {
+    fileInput.value = '';
+    state.selectedFile = null;
+    state.selectedSampleId = null;
+    document.querySelectorAll('.sample-select-btn').forEach(b => b.classList.remove('sample-active'));
+    elements.workspacePreviewImg.src = '';
+    elements.workspaceFilename.textContent = 'No frame loaded';
+    elements.workspaceDim.textContent = '—';
+    elements.workspaceFilesize.textContent = '—';
+    elements.workspaceStatusBadge.textContent = 'Pending';
+    elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
+    hideAlert();
+  });
+
+  const btnReset = document.getElementById('btn-workspace-reset');
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      fileInput.value = '';
+      if (state.samples.cancer) {
+        applySample('cancer');
+      } else {
+        state.selectedFile = null;
+        state.selectedSampleId = null;
+        elements.workspacePreviewImg.src = '';
+        elements.workspaceFilename.textContent = 'No frame loaded';
+        elements.workspaceDim.textContent = '—';
+        elements.workspaceFilesize.textContent = '—';
+        elements.workspaceStatusBadge.textContent = 'Pending';
+        elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
+      }
+      hideAlert();
+    });
+  }
+}
+
+async function handleUserFile(file) {
+  // Clear sample button highlights
+  document.querySelectorAll('.sample-select-btn').forEach(b => b.classList.remove('sample-active'));
+
+  // Validate file type
+  if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+    showAlert('Unsupported File Type', 'Please upload a colonoscopy frame in JPEG or PNG format.');
+    return;
+  }
+  // Validate file size (< 15MB)
+  if (file.size > 15 * 1024 * 1024) {
+    showAlert('File Size Limit Exceeded', 'Frame exceeds the 15MB clinical processing limit.');
+    return;
+  }
+
+  state.selectedFile = file;
+  state.selectedSampleId = null;
+
+  // Read file as Data URL
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUri = e.target.result;
+    elements.workspacePreviewImg.src = dataUri;
+    elements.workspaceFilename.textContent = file.name;
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    elements.workspaceFilesize.textContent = `${sizeMb} MB`;
+
+    // Measure dimensions
+    const img = new Image();
+    img.onload = () => {
+      elements.workspaceDim.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+    };
+    img.src = dataUri;
+
+    // Run domain validation check
+    await validateFile(file);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function validateFile(file) {
+  try {
+    elements.workspaceStatusBadge.textContent = 'Verifying...';
+    elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-surface-container text-primary font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono animate-pulse';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch('/api/validate', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (data.is_endoscopy) {
+      elements.workspaceStatusBadge.textContent = 'Validated';
+      elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
+      hideAlert();
+    } else {
+      elements.workspaceStatusBadge.textContent = 'OOD Rejected';
+      elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-error text-white font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
+      showAlert(
+        'Out-of-Domain Image Detected',
+        `The submitted image failed endoscopy domain verification (Score: ${data.domain_score.toFixed(4)} < Threshold: ${data.threshold.toFixed(4)}). Please upload an authentic endoscopic colonoscopy frame.`
+      );
+    }
+  } catch (err) {
+    console.error('Validation error:', err);
+  }
+}
+
+function showAlert(title, msg) {
+  elements.analyzeAlertTitle.textContent = title;
+  elements.analyzeAlertMsg.textContent = msg;
+  elements.analyzeAlertBanner.classList.remove('hidden');
+}
+
+function hideAlert() {
+  elements.analyzeAlertBanner.classList.add('hidden');
+}
+
+// ── Model Selection Controls ─────────────────────────────────────────────────
+function initModelSelector() {
+  const radios = document.querySelectorAll('input[name="model_choice"]');
+  radios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      state.selectedModel = radio.value;
+
+      // Update card visual borders
+      document.querySelectorAll('.model-radio-card').forEach(card => {
+        card.classList.remove('bg-secondary-container/60', 'border-2', 'border-primary-container');
+        card.classList.add('bg-surface-container-low', 'border', 'border-outline-variant/40');
+      });
+
+      const parentCard = radio.closest('.model-radio-card');
+      if (parentCard) {
+        parentCard.classList.remove('bg-surface-container-low', 'border-outline-variant/40');
+        parentCard.classList.add('bg-secondary-container/60', 'border-2', 'border-primary-container');
+      }
+    });
+  });
+}
+
+// ── Saliency Opacity & Colormaps ──────────────────────────────────────────────
+function initSaliencyControls() {
+  elements.sliderOpacity.addEventListener('input', (e) => {
+    state.blendAlpha = parseFloat(e.target.value) / 100.0;
+    elements.sliderOpacityVal.textContent = `${e.target.value}%`;
+  });
+
+  // Colormap toggle buttons
+  document.querySelectorAll('.cmap-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cmap-btn').forEach(b => {
+        b.className = 'cmap-btn px-2.5 py-1 rounded text-[11px] font-mono text-secondary hover:text-on-surface';
+      });
+      btn.className = 'cmap-btn px-2.5 py-1 rounded text-[11px] font-mono font-semibold bg-primary-container text-on-primary shadow-xs';
+      state.selectedColormap = btn.dataset.cmap;
+    });
+  });
+}
+
+// ── Run Saliency Analysis ────────────────────────────────────────────────────
+function initAnalysisExecution() {
+  elements.btnRunAnalysis.addEventListener('click', async () => {
+    if (!state.selectedFile && !state.selectedSampleId) {
+      showAlert('No Image Selected', 'Please select a preloaded benchmark sample or upload a colonoscopy frame.');
+      return;
+    }
+
+    // Set Loading State
+    elements.btnRunAnalysis.disabled = true;
+    elements.runBtnIcon.textContent = 'progress_activity';
+    elements.runBtnIcon.classList.add('animate-spin');
+    elements.runBtnText.textContent = 'Analyzing Neural Activations...';
+
+    const formData = new FormData();
+    formData.append('model_choice', state.selectedModel);
+    formData.append('alpha', state.blendAlpha);
+    formData.append('colormap', state.selectedColormap);
+
+    if (state.selectedSampleId) {
+      formData.append('sample_id', state.selectedSampleId);
+    } else if (state.selectedFile) {
+      formData.append('file', state.selectedFile);
+    }
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        showAlert(errData.error || 'Analysis Error', errData.message || 'An error occurred during neural inference.');
+        return;
+      }
+
+      const result = await res.json();
+      state.lastAnalysis = result;
+
+      // Populate Results View
+      renderAnalysisResults(result);
+
+      // Switch to Results
+      switchView('results');
+
+      // Refresh overview history list
+      loadHistory();
+    } catch (err) {
+      console.error('Inference execution error:', err);
+      showAlert('Inference Error', 'Failed to communicate with PyTorch backend: ' + err.message);
+    } finally {
+      elements.btnRunAnalysis.disabled = false;
+      elements.runBtnIcon.textContent = 'biotech';
+      elements.runBtnIcon.classList.remove('animate-spin');
+      elements.runBtnText.textContent = 'Run Saliency Analysis';
+    }
+  });
+}
+
+function renderAnalysisResults(res) {
+  // Reveal content wrapper and hide empty state
+  const emptyState = document.getElementById('results-empty-state');
+  const contentWrapper = document.getElementById('results-content-wrapper');
+  emptyState?.classList.add('hidden');
+  contentWrapper?.classList.remove('hidden');
+  contentWrapper?.classList.add('flex');
+
+  // Domain score & metadata
+  elements.resDomainScore.textContent = `Endoscopy (${res.domain_score.toFixed(4)} >= ${res.threshold.toFixed(4)})`;
+  elements.resModelBadge.textContent = `${res.model_name}`;
+  elements.resTimestamp.textContent = `Analyzed ${res.timestamp}`;
+  elements.resRunId.textContent = `Run ID: #${res.run_id}`;
+  elements.resTargetLayerChip.textContent = res.target_layer;
+  elements.spectrumLayerTag.textContent = `${res.model_name} ${res.target_layer}`;
+
+  // Prediction Titles
+  const isCancer = res.prediction_raw === 'colorectal_cancer';
+  elements.resPredTitle.textContent = isCancer
+    ? 'Colorectal Carcinoma Features Detected'
+    : 'Colon Diverticula Mucosal Alteration Detected';
+
+  elements.resPredDesc.textContent = isCancer
+    ? 'Inference score, not a definitive clinical diagnosis. Neural activations match polypoid and mucosal architectural disruption.'
+    : 'Inference score, not a definitive clinical diagnosis. Neural activations identify colon diverticular pouching orifices and mucosal folding.';
+
+  elements.resConfidencePill.textContent = `${res.confidence_pct} Confidence`;
+
+  // Probabilities
+  const pCancer = (res.probabilities.colorectal_cancer * 100).toFixed(1);
+  const pDivert = (res.probabilities.colon_diverticula * 100).toFixed(1);
+
+  elements.probValCancer.textContent = `${pCancer}%`;
+  elements.probBarCancer.style.width = `${pCancer}%`;
+
+  elements.probValDiverticula.textContent = `${pDivert}%`;
+  elements.probBarDiverticula.style.width = `${pDivert}%`;
+
+  // Images in Saliency Viewport
+  elements.resBaseImg.src = res.original_uri;
+  elements.resHeatmapImg.src = res.heatmap_uri;
+  elements.resOverlayImg.src = res.overlay_uri;
+
+  // Reticle positioning
+  const reticleX = Math.round(res.peak_x * 100);
+  const reticleY = Math.round(res.peak_y * 100);
+  elements.saliencyReticleBox.style.left = `${reticleX}%`;
+  elements.saliencyReticleBox.style.top = `${reticleY}%`;
+  elements.reticleCoordsLabel.textContent = `Peak Attention (x:${res.peak_x}, y:${res.peak_y})`;
+
+  // Reset viewport mode to overlay
+  setViewportMode('overlay');
+}
+
+// ── Results Viewport Modes & Zoom ────────────────────────────────────────────
+function initResultsViewport() {
+  // Mode tabs
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      setViewportMode(tab.dataset.mode);
+    });
+  });
+
+  // Dynamic Alpha slider in results
+  elements.resAlphaSlider.addEventListener('input', (e) => {
+    const alpha = parseFloat(e.target.value) / 100.0;
+    elements.resAlphaDisplay.textContent = `${e.target.value}%`;
+    elements.resOverlayImg.style.opacity = alpha;
+    elements.resHeatmapImg.style.opacity = alpha;
+  });
+
+  // Zoom controls
+  document.getElementById('btn-zoom-in').addEventListener('click', () => {
+    state.zoomLevel = Math.min(2.5, state.zoomLevel + 0.25);
+    applyZoom();
+  });
+
+  document.getElementById('btn-zoom-out').addEventListener('click', () => {
+    state.zoomLevel = Math.max(1.0, state.zoomLevel - 0.25);
+    applyZoom();
+  });
+
+  document.getElementById('btn-zoom-reset').addEventListener('click', () => {
+    state.zoomLevel = 1.0;
+    applyZoom();
+  });
+
+  // Navigate to compare from results
+  document.getElementById('btn-compare-from-results').addEventListener('click', () => {
+    switchView('models');
+  });
+
+  // Start new analysis button
+  const btnNewAnalysis = document.getElementById('btn-new-analysis');
+  if (btnNewAnalysis) {
+    btnNewAnalysis.addEventListener('click', () => {
+      switchView('analyze');
+    });
+  }
+
+  // PDF Download Action
+  elements.btnDownloadPdf.addEventListener('click', downloadPdfReport);
+}
+
+function setViewportMode(mode) {
+  state.viewportMode = mode;
+
+  document.querySelectorAll('.mode-tab').forEach(t => {
+    if (t.dataset.mode === mode) {
+      t.className = 'mode-tab flex-1 py-1.5 rounded text-center font-label-sm text-label-sm font-semibold transition-all bg-primary-container text-on-primary shadow-xs';
+    } else {
+      t.className = 'mode-tab flex-1 py-1.5 rounded text-center font-label-sm text-label-sm text-secondary hover:text-on-surface transition-all';
+    }
+  });
+
+  if (mode === 'overlay') {
+    elements.resBaseImg.style.opacity = '1';
+    elements.resHeatmapImg.style.display = 'none';
+    elements.resOverlayImg.style.display = 'block';
+    elements.resOverlayImg.style.opacity = '1';
+    elements.saliencyReticleBox.style.display = 'flex';
+  } else if (mode === 'original') {
+    elements.resBaseImg.style.opacity = '1';
+    elements.resHeatmapImg.style.display = 'none';
+    elements.resOverlayImg.style.display = 'none';
+    elements.saliencyReticleBox.style.display = 'none';
+  } else if (mode === 'heatmap') {
+    elements.resBaseImg.style.opacity = '0';
+    elements.resHeatmapImg.style.display = 'block';
+    elements.resHeatmapImg.style.opacity = '1';
+    elements.resOverlayImg.style.display = 'none';
+    elements.saliencyReticleBox.style.display = 'flex';
+  }
+}
+
+function applyZoom() {
+  const transform = `scale(${state.zoomLevel})`;
+  elements.resBaseImg.style.transform = transform;
+  elements.resHeatmapImg.style.transform = transform;
+  elements.resOverlayImg.style.transform = transform;
+}
+
+// ── PDF Report Generation ────────────────────────────────────────────────────
+async function downloadPdfReport() {
+  if (!state.lastAnalysis) {
+    alert('Please execute an image analysis first before generating a report.');
+    return;
+  }
+
+  const btn = elements.btnDownloadPdf;
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `
+    <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+    <span>Generating Clinical PDF...</span>
+  `;
+
+  try {
+    const payload = {
+      model_name: state.lastAnalysis.model_name,
+      prediction: state.lastAnalysis.prediction,
+      confidence: state.lastAnalysis.confidence,
+      prob_cancer: state.lastAnalysis.probabilities.colorectal_cancer,
+      prob_diverticula: state.lastAnalysis.probabilities.colon_diverticula,
+      validation_score: state.lastAnalysis.domain_score,
+      threshold: state.lastAnalysis.threshold,
+      original_uri: state.lastAnalysis.original_uri,
+      heatmap_uri: state.lastAnalysis.heatmap_uri,
+      overlay_uri: state.lastAnalysis.overlay_uri,
+    };
+
+    const res = await fetch('/api/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error('PDF Generation failed on server');
+
+    const blob = await res.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `ColonVision_AI_Report_${state.lastAnalysis.run_id}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (err) {
+    console.error('PDF download error:', err);
+    alert('Failed to generate PDF report: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+
+// ── Multi-Model Comparison Execution ─────────────────────────────────────────
+async function triggerMultiModelComparison() {
+  const formData = new FormData();
+  if (state.selectedSampleId) {
+    formData.append('sample_id', state.selectedSampleId);
+  } else if (state.selectedFile) {
+    formData.append('file', state.selectedFile);
+  } else {
+    // Default fallback to cancer sample
+    formData.append('sample_id', 'cancer');
+  }
+
+  try {
+    const res = await fetch('/api/compare', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    state.lastComparison = data;
+
+    // Consensus Banner
+    elements.compareConsensusTitle.textContent = data.consensus.agreement_rate === 1.0
+      ? 'Model Consensus: High Agreement'
+      : 'Model Consensus: Divergent Agreement';
+    elements.compareConsensusDesc.innerHTML = `${data.consensus.summary} (Concordance κ = ${data.consensus.kappa}).`;
+
+    // DenseNet-121
+    if (data.models.densenet121) {
+      const m = data.models.densenet121;
+      elements.footprintDensenet.src = m.overlay_uri;
+      elements.compareConfDensenet.textContent = m.confidence_pct;
+      elements.comparePredDensenet.textContent = m.prediction.replace('Colorectal ', '').replace('Colon ', '');
+      elements.compareBarDensenet.style.width = m.confidence_pct;
+      elements.compareLatDensenet.textContent = `${m.latency_ms} ms`;
+    }
+
+    // ResNet-50
+    if (data.models.resnet50) {
+      const m = data.models.resnet50;
+      elements.footprintResnet.src = m.overlay_uri;
+      elements.compareConfResnet.textContent = m.confidence_pct;
+      elements.comparePredResnet.textContent = m.prediction.replace('Colorectal ', '').replace('Colon ', '');
+      elements.compareBarResnet.style.width = m.confidence_pct;
+      elements.compareLatResnet.textContent = `${m.latency_ms} ms`;
+    }
+
+    // EfficientNet-B0
+    if (data.models.efficientnet_b0) {
+      const m = data.models.efficientnet_b0;
+      elements.footprintEfficientnet.src = m.overlay_uri;
+      elements.compareConfEfficientnet.textContent = m.confidence_pct;
+      elements.comparePredEfficientnet.textContent = m.prediction.replace('Colorectal ', '').replace('Colon ', '');
+      elements.compareBarEfficientnet.style.width = m.confidence_pct;
+      elements.compareLatEfficientnet.textContent = `${m.latency_ms} ms`;
+    }
+  } catch (err) {
+    console.error('Comparative models error:', err);
+  }
+}
+
+// ── Overview Retrospective History ───────────────────────────────────────────
+async function clearHistory() {
+  try {
+    const res = await fetch('/api/history', { method: 'DELETE' });
+    if (res.ok) {
+      await loadHistory();
+    }
+  } catch (err) {
+    console.error('History clear error:', err);
+  }
+}
+
+async function loadHistory() {
+  try {
+    const res = await fetch('/api/history');
+    if (!res.ok) return;
+    const data = await res.json();
+    const history = data.history || [];
+
+    const container = elements.overviewHistoryContainer;
+    container.innerHTML = '';
+
+    if (history.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full py-8 text-center bg-surface-container-lowest rounded-xl border border-dashed border-outline-variant/40 flex flex-col items-center justify-center gap-2 p-4">
+          <span class="material-symbols-outlined text-[32px] text-secondary">history</span>
+          <p class="font-headline-sm text-body-sm font-semibold text-on-surface">No analyses logged in this session</p>
+          <p class="font-body-sm text-body-sm text-secondary max-w-sm">Upload a colonoscopy frame or run inference on a preloaded benchmark sample to log session records here.</p>
+          <button id="empty-state-analyze-btn" type="button" class="mt-2 px-3.5 py-1.5 rounded-lg bg-primary-container text-on-primary font-headline-sm text-body-sm shadow-xs hover:bg-primary active:scale-95 transition-all">
+            Analyze First Image
+          </button>
+        </div>
+      `;
+      document.getElementById('empty-state-analyze-btn')?.addEventListener('click', () => switchView('analyze'));
+      return;
+    }
+
+    history.slice(0, 6).forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'bg-surface-container-lowest rounded-xl p-3.5 shadow-xs border border-outline-variant/30 flex gap-3 items-center hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer group';
+      card.title = 'Click to inspect this analysis in Results & Explainability';
+      
+      const isCancer = item.prediction.toLowerCase().includes('cancer') || item.prediction.toLowerCase().includes('carcinoma');
+
+      card.innerHTML = `
+        <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center flex-shrink-0 text-primary group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
+          <span class="material-symbols-outlined text-[24px]">biotech</span>
+        </div>
+        <div class="flex flex-col min-w-0 flex-1 gap-1">
+          <div class="flex items-center justify-between gap-1 font-mono text-[11px]">
+            <span class="text-secondary">${item.timestamp}</span>
+            <span class="px-1.5 py-0.2 rounded bg-surface-container text-on-surface">${item.model_name}</span>
+          </div>
+          <h3 class="font-headline-sm text-body-sm text-on-surface font-semibold truncate group-hover:text-primary transition-colors">${item.prediction}</h3>
+          <div class="flex items-center gap-2 pt-0.5">
+            <div class="flex-1 bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+              <div class="bg-primary-container h-full rounded-full" style="width: ${item.confidence_pct || '90%'}"></div>
+            </div>
+            <span class="font-label-sm text-[11px] font-bold text-primary-container font-mono">${item.confidence_pct || '90%'}</span>
+          </div>
+        </div>
+        <span class="material-symbols-outlined text-secondary group-hover:text-primary text-[20px] flex-shrink-0 transition-colors">chevron_right</span>
+      `;
+
+      card.addEventListener('click', () => {
+        if (item.original_uri && item.overlay_uri) {
+          state.lastAnalysis = item;
+          renderAnalysisResults(item);
+          switchView('results');
+        } else {
+          switchView('analyze');
+        }
+      });
+
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.error('History load error:', err);
+  }
+}
+
+// ── Module Drawer Toggle ─────────────────────────────────────────────────────
+function initMenuDrawer() {
+  const menuBtn = document.getElementById('btn-toggle-menu');
+  const closeBtn = document.getElementById('btn-close-drawer');
+  const backdrop = document.getElementById('drawer-backdrop');
+  const drawer = document.getElementById('clinical-drawer');
+  const drawerClearBtn = document.getElementById('btn-drawer-clear-history');
+
+  function openDrawer() {
+    drawer?.classList.add('drawer-open');
+    backdrop?.classList.add('backdrop-open');
+  }
+
+  function closeDrawer() {
+    drawer?.classList.remove('drawer-open');
+    backdrop?.classList.remove('backdrop-open');
+  }
+
+  const desktopTelemetryBtn = document.getElementById('btn-desktop-telemetry');
+  const statusIndicator = document.getElementById('system-status-indicator');
+
+  menuBtn?.addEventListener('click', openDrawer);
+  closeBtn?.addEventListener('click', closeDrawer);
+  backdrop?.addEventListener('click', closeDrawer);
+  desktopTelemetryBtn?.addEventListener('click', openDrawer);
+  statusIndicator?.addEventListener('click', openDrawer);
+
+  document.querySelectorAll('[data-drawer-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.drawerTarget;
+      closeDrawer();
+      if (target) switchView(target);
+    });
+  });
+
+  drawerClearBtn?.addEventListener('click', async () => {
+    closeDrawer();
+    await clearHistory();
+  });
+}
+
+// ── System Health & Hardware Telemetry ───────────────────────────────────────
+async function fetchSystemHealth() {
+  try {
+    const res = await fetch('/api/health');
+    if (res.ok) {
+      const health = await res.json();
+      const drawerDevice = document.getElementById('drawer-device');
+      if (drawerDevice) {
+        drawerDevice.textContent = `${health.device.toUpperCase()} (Torch ${health.torch_version})`;
+      }
+    }
+  } catch (err) {
+    console.warn('Health check warning:', err);
+  }
+}
+
+// ── CTA Buttons on Overview & Header ─────────────────────────────────────────
+function initOverviewCtas() {
+  // Brand logo home link
+  document.getElementById('btn-nav-home')?.addEventListener('click', () => switchView('overview'));
+
+  // Clear history from overview
+  document.getElementById('btn-overview-clear-history')?.addEventListener('click', clearHistory);
+
+  // Overview & Results CTA buttons
+  document.getElementById('cta-analyze-new')?.addEventListener('click', () => switchView('analyze'));
+  document.getElementById('cta-explore-models')?.addEventListener('click', () => switchView('models'));
+  document.getElementById('btn-results-to-analyze')?.addEventListener('click', () => switchView('analyze'));
+
+  // Preset sample buttons on Analyze page
+  document.getElementById('sample-cancer-btn')?.addEventListener('click', () => applySample('cancer'));
+  document.getElementById('sample-diverticula-btn')?.addEventListener('click', () => applySample('diverticula'));
+
+  // Re-run comparison button
+  const btnRerun = document.getElementById('btn-rerun-compare');
+  if (btnRerun) {
+    btnRerun.addEventListener('click', async () => {
+      const icon = document.getElementById('rerun-compare-icon');
+      const text = document.getElementById('rerun-compare-text');
+      btnRerun.disabled = true;
+      icon?.classList.add('animate-spin');
+      if (text) text.textContent = 'Comparing Models...';
+      await triggerMultiModelComparison();
+      icon?.classList.remove('animate-spin');
+      if (text) text.textContent = 'Re-run Comparison';
+      btnRerun.disabled = false;
+    });
+  }
+
+  // Nav buttons registration (Mobile & Desktop)
+  document.querySelectorAll('.mobile-nav-btn, .desktop-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+      if (target) switchView(target);
+    });
+  });
+}
+
+// ── Initialization ───────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  initDropzone();
+  initModelSelector();
+  initSaliencyControls();
+  initAnalysisExecution();
+  initResultsViewport();
+  initMenuDrawer();
+  initOverviewCtas();
+
+  // Load initial data
+  await fetchSystemHealth();
+  await loadSamples();
+  await loadHistory();
+
+  // Initial view is Overview
+  switchView('overview');
+});

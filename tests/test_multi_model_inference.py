@@ -171,6 +171,15 @@ def run_model_switching_gradcam_regression_test():
     print("=" * 70)
 
 
+def test_multi_model_inference():
+    run_multi_model_tests()
+
+
+def test_model_switching_gradcam():
+    run_model_switching_gradcam_regression_test()
+
+
 if __name__ == "__main__":
     run_multi_model_tests()
     run_model_switching_gradcam_regression_test()
+
