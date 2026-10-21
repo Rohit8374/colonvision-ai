@@ -122,8 +122,14 @@ def extract_embedding(img_path: Path, extractor: nn.Module) -> np.ndarray:
 def extract_embedding_from_pil(pil_img: Image.Image, extractor: nn.Module) -> np.ndarray:
     rgb_img = pil_img.convert("RGB")
     tensor = eval_transform(rgb_img).unsqueeze(0).to(DEVICE)
-    with torch.inference_mode():
-        feat = extractor(tensor).squeeze().cpu().numpy()
+    try:
+        extractor_b16 = extractor.to(torch.bfloat16)
+        tensor_b16 = tensor.to(torch.bfloat16)
+        with torch.inference_mode():
+            feat = extractor_b16(tensor_b16).squeeze().to(torch.float32).cpu().numpy()
+    except Exception:
+        with torch.inference_mode():
+            feat = extractor(tensor).squeeze().cpu().numpy()
     norm = np.linalg.norm(feat)
     if norm > 1e-8:
         return feat / norm
