@@ -112,7 +112,7 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-DjBkf8eU.js"></script>
+  <script type="module" crossorigin src="/assets/index-Dh8tU6_Q.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-CgK77__v.css">
 </head>
 
@@ -500,8 +500,8 @@
         <div class="lg:col-span-7 flex flex-col gap-space-md">
           <div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-xs border border-outline-variant/30 flex flex-col gap-3">
             
-            <!-- Dark Inspection Viewport Wrapper (#101713) -->
-            <div class="relative w-full rounded-lg overflow-hidden diagnostic-canvas">
+            <!-- Dark Inspection Viewport Wrapper (Hidden until image is selected/uploaded) -->
+            <div id="workspace-preview-panel" class="hidden relative w-full rounded-lg overflow-hidden diagnostic-canvas">
               <div class="relative aspect-square w-full flex items-center justify-center overflow-hidden">
                 <img id="workspace-preview-img" alt="Endoscopic frame sample" class="w-full h-full object-cover transition-transform duration-300" src="" />
                 
@@ -527,15 +527,15 @@
                 <!-- Bottom Telemetry Banner within Inverted Viewer -->
                 <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-tertiary via-tertiary/85 to-transparent p-3 pt-8 flex items-end justify-between">
                   <div class="min-w-0 pr-2">
-                    <p id="workspace-filename" class="font-label-md text-label-md text-surface-bright truncate font-medium font-mono">sample_colorectal_cancer.jpg</p>
+                    <p id="workspace-filename" class="font-label-md text-label-md text-surface-bright truncate font-medium font-mono">No frame loaded</p>
                     <div class="flex items-center gap-2 mt-0.5 font-mono">
-                      <span id="workspace-dim" class="font-label-sm text-label-sm text-secondary-fixed-dim">1024 × 1024 px</span>
+                      <span id="workspace-dim" class="font-label-sm text-label-sm text-secondary-fixed-dim">—</span>
                       <span class="text-secondary-fixed-dim">•</span>
-                      <span id="workspace-filesize" class="font-label-sm text-label-sm text-secondary-fixed-dim">1.58 MB</span>
+                      <span id="workspace-filesize" class="font-label-sm text-label-sm text-secondary-fixed-dim">—</span>
                     </div>
                   </div>
-                  <span id="workspace-status-badge" class="px-2.5 py-0.5 rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono">
-                    Validated
+                  <span id="workspace-status-badge" class="px-2.5 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono">
+                    Pending
                   </span>
                 </div>
               </div>

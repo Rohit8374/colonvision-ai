@@ -113,8 +113,50 @@ def test_backend_api():
     assert len(r_empty.json().get("history", [])) == 0
     print("   [PASS] History cleared successfully (0 items remaining)")
 
+    # 8. Testing ResNet-50 and EfficientNet-B0 inference
+    print("\n8. Testing inference on ResNet-50 and EfficientNet-B0...")
+    for m_key in ["resnet50", "efficientnet_b0"]:
+        r_m = client.post("/api/analyze", data={
+            "model_choice": m_key,
+            "sample_id": "diverticula",
+            "alpha": "0.45",
+            "colormap": "magma",
+        })
+        assert r_m.status_code == 200, f"Analysis for {m_key} failed: {r_m.text}"
+        assert "application/json" in r_m.headers["content-type"]
+        assert "overlay_uri" in r_m.json()
+        print(f"   [PASS] {m_key}: {r_m.json()['prediction']} ({r_m.json()['confidence_pct']})")
+
+    # 9. Verify Error Handling & JSON Guarantee (Issue 1)
+    print("\n9. Testing API Error Handling and Content-Type Guarantees...")
+    # 9a. Unknown API route must return 404 JSON, NOT HTML
+    r_404 = client.get("/api/nonexistent_route")
+    assert r_404.status_code == 404
+    assert "application/json" in r_404.headers["content-type"]
+    assert not r_404.text.startswith("<!DOCTYPE")
+    print("   [PASS] Unknown /api endpoint returned JSON 404 (no HTML).")
+
+    # 9b. Invalid model parameter returns 400 JSON
+    r_bad_model = client.post("/api/analyze", data={"model_choice": "nonexistent_model", "sample_id": "cancer"})
+    assert r_bad_model.status_code == 400
+    assert "application/json" in r_bad_model.headers["content-type"]
+    print("   [PASS] Invalid model returned JSON 400 error.")
+
+    # 9c. Missing file/sample returns 400 JSON
+    r_missing = client.post("/api/analyze", data={"model_choice": "densenet121"})
+    assert r_missing.status_code == 400
+    assert "application/json" in r_missing.headers["content-type"]
+    print("   [PASS] Missing image input returned JSON 400 error.")
+
+    # 9d. Root route serves compiled SPA HTML
+    r_root = client.get("/")
+    assert r_root.status_code == 200
+    assert "text/html" in r_root.headers["content-type"]
+    assert "ColonVision AI" in r_root.text
+    print("   [PASS] Root route successfully served compiled frontend SPA.")
+
     print("\n" + "=" * 60)
-    print("ALL FASTAPI BACKEND ENDPOINTS PASSED SUCCESSFULLY!")
+    print("ALL FASTAPI BACKEND ENDPOINTS AND ERROR TESTS PASSED!")
     print("=" * 60)
 
 if __name__ == "__main__":

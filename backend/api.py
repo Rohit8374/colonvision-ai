@@ -67,6 +67,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Custom Exception Handlers to guarantee pure JSON responses for all failures
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+@app.exception_handler(HTTPException)
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request, exc):
+    detail = exc.detail if hasattr(exc, "detail") else str(exc)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": "Request Error",
+            "message": str(detail),
+            "detail": detail,
+        },
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "Validation Error",
+            "message": "Invalid input parameters provided.",
+            "detail": exc.errors(),
+        },
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc: Exception):
+    import traceback
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "PyTorch Backend Error",
+            "message": f"Inference engine failure: {str(exc)}",
+            "detail": str(exc),
+        },
+    )
+
 # Global in-memory cache for models and validator
 _MODELS_CACHE: Dict[str, Any] = {}
 _VALIDATOR: Optional[EndoscopyValidator] = None
@@ -291,17 +332,17 @@ async def validate_image(
     """
     validator = get_cached_validator()
 
-    if sample_id:
-        sample_path = SAMPLES_DIR / f"sample_{'colorectal_cancer' if sample_id == 'cancer' else 'colon_diverticula'}.jpg"
-        if not sample_path.exists():
-            raise HTTPException(status_code=404, detail="Sample not found")
-        img = Image.open(sample_path).convert("RGB")
-    elif file:
+    if file:
         content = await file.read()
         try:
             img = Image.open(io.BytesIO(content)).convert("RGB")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid image format: {str(e)}")
+    elif sample_id and sample_id not in ("null", "undefined", ""):
+        sample_path = SAMPLES_DIR / f"sample_{'colorectal_cancer' if sample_id == 'cancer' else 'colon_diverticula'}.jpg"
+        if not sample_path.exists():
+            raise HTTPException(status_code=404, detail="Sample not found")
+        img = Image.open(sample_path).convert("RGB")
     else:
         raise HTTPException(status_code=400, detail="No file or sample_id provided")
 
@@ -336,15 +377,7 @@ async def analyze_image(
     # Load image
     filename = "uploaded_frame.jpg"
     filesize_mb = 1.0
-    if sample_id:
-        sample_filename = "sample_colorectal_cancer.jpg" if sample_id == "cancer" else "sample_colon_diverticula.jpg"
-        sample_path = SAMPLES_DIR / sample_filename
-        if not sample_path.exists():
-            raise HTTPException(status_code=404, detail="Sample not found")
-        img = Image.open(sample_path).convert("RGB")
-        filename = "colon_neoplasm_cecum_018.jpg" if sample_id == "cancer" else "sigmoid_diverticulum_093.jpg"
-        filesize_mb = sample_path.stat().st_size / (1024 * 1024)
-    elif file:
+    if file:
         filename = file.filename or "uploaded_frame.jpg"
         content = await file.read()
         filesize_mb = len(content) / (1024 * 1024)
@@ -352,6 +385,14 @@ async def analyze_image(
             img = Image.open(io.BytesIO(content)).convert("RGB")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid image file: {str(e)}")
+    elif sample_id and sample_id not in ("null", "undefined", ""):
+        sample_filename = "sample_colorectal_cancer.jpg" if sample_id == "cancer" else "sample_colon_diverticula.jpg"
+        sample_path = SAMPLES_DIR / sample_filename
+        if not sample_path.exists():
+            raise HTTPException(status_code=404, detail="Sample not found")
+        img = Image.open(sample_path).convert("RGB")
+        filename = "colon_neoplasm_cecum_018.jpg" if sample_id == "cancer" else "sigmoid_diverticulum_093.jpg"
+        filesize_mb = sample_path.stat().st_size / (1024 * 1024)
     else:
         raise HTTPException(status_code=400, detail="Must provide an image file or sample_id")
 
@@ -445,18 +486,18 @@ async def compare_all_models(
     Runs ResNet-50, DenseNet-121, and EfficientNet-B0 on the EXACT same frame.
     Generates side-by-side attribution footprints, consensus agreement, and latency metrics.
     """
-    if sample_id:
-        sample_filename = "sample_colorectal_cancer.jpg" if sample_id == "cancer" else "sample_colon_diverticula.jpg"
-        sample_path = SAMPLES_DIR / sample_filename
-        if not sample_path.exists():
-            raise HTTPException(status_code=404, detail="Sample not found")
-        img = Image.open(sample_path).convert("RGB")
-    elif file:
+    if file:
         content = await file.read()
         try:
             img = Image.open(io.BytesIO(content)).convert("RGB")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid image: {str(e)}")
+    elif sample_id and sample_id not in ("null", "undefined", ""):
+        sample_filename = "sample_colorectal_cancer.jpg" if sample_id == "cancer" else "sample_colon_diverticula.jpg"
+        sample_path = SAMPLES_DIR / sample_filename
+        if not sample_path.exists():
+            raise HTTPException(status_code=404, detail="Sample not found")
+        img = Image.open(sample_path).convert("RGB")
     else:
         raise HTTPException(status_code=400, detail="No file or sample_id provided")
 
@@ -621,8 +662,16 @@ if DIST_DIR.exists() and (DIST_DIR / "index.html").exists():
     @app.get("/{full_path:path}")
     async def serve_spa_routes(full_path: str):
         # Do not catch API routes
-        if full_path.startswith("api"):
-            raise HTTPException(status_code=404, detail="API route not found")
+        clean_path = full_path.lstrip("/")
+        if clean_path.startswith("api"):
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "error": "Not Found",
+                    "message": f"API endpoint '/{clean_path}' does not exist on this server.",
+                    "detail": "Endpoint not found",
+                },
+            )
         file_path = DIST_DIR / full_path
         if file_path.exists() and file_path.is_file():
             return FileResponse(file_path)

@@ -6,6 +6,7 @@ Runs the FastAPI medical research backend and serves the compiled Stitch
 frontend with automatic port detection and clean startup logging.
 """
 
+import os
 import socket
 import sys
 from pathlib import Path
@@ -31,8 +32,13 @@ def find_available_port(preferred: int = 8000, max_attempts: int = 10) -> int:
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Start ColonVision AI Platform")
-    parser.add_argument("--port", type=int, default=None, help="Port to run on (default: auto-detect 8000+)")
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host interface (default: 127.0.0.1)")
+
+    # Support Render / Cloud PaaS port injection
+    env_port = int(os.environ["PORT"]) if "PORT" in os.environ and os.environ["PORT"].isdigit() else None
+    env_host = os.environ.get("HOST", "0.0.0.0")
+
+    parser.add_argument("--port", type=int, default=env_port, help="Port to run on (default: $PORT or auto-detect 8000+)")
+    parser.add_argument("--host", type=str, default=env_host, help="Host interface (default: $HOST or 0.0.0.0)")
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development")
     args = parser.parse_args()
 

@@ -10,7 +10,7 @@
 const state = {
   currentView: 'overview',
   selectedModel: 'densenet121',
-  selectedSampleId: 'cancer',
+  selectedSampleId: null,
   selectedFile: null,
   selectedColormap: 'jet',
   blendAlpha: 0.45,
@@ -49,6 +49,7 @@ const MODEL_CONFIGS = {
 // ── DOM Elements ─────────────────────────────────────────────────────────────
 const elements = {
   viewTitleText: document.getElementById('view-title-text'),
+  workspacePreviewPanel: document.getElementById('workspace-preview-panel'),
   workspacePreviewImg: document.getElementById('workspace-preview-img'),
   workspaceFilename: document.getElementById('workspace-filename'),
   workspaceDim: document.getElementById('workspace-dim'),
@@ -108,6 +109,78 @@ const elements = {
   compareBarEfficientnet: document.getElementById('compare-bar-efficientnet'),
   compareLatEfficientnet: document.getElementById('compare-lat-efficientnet'),
 };
+
+/**
+ * Safely executes an API request with strict HTTP status and content-type validation.
+ * Prevents "Unexpected token '<', '<!DOCTYPE '... is not valid JSON" parsing syntax errors
+ * by validating that the response is genuine JSON before calling res.json().
+ *
+ * If the response fails or returns non-JSON (e.g. 502/504 Bad Gateway, 404, or SPA redirect),
+ * this helper extracts meaningful clinical/server error information without masking genuine PyTorch errors.
+ */
+async function safeApiRequest(url, options = {}) {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch (networkErr) {
+    const err = new Error(`Network connection error: Unable to reach PyTorch backend at ${url}. ${networkErr.message}`);
+    err.errorType = 'Connection Error';
+    throw err;
+  }
+
+  const contentType = res.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
+
+  if (!res.ok) {
+    if (isJson) {
+      let errData;
+      try {
+        errData = await res.json();
+      } catch (_) {
+        throw new Error(`Server returned HTTP ${res.status} ${res.statusText}`);
+      }
+      const message = errData.message || errData.detail || errData.error || `Server returned HTTP ${res.status} ${res.statusText}`;
+      const err = new Error(typeof message === 'object' ? JSON.stringify(message) : message);
+      err.errorType = errData.error || `HTTP ${res.status} Error`;
+      err.data = errData;
+      err.status = res.status;
+      throw err;
+    } else {
+      // Non-JSON response (e.g. Render HTML 502 Bad Gateway / 504 Timeout / 404 Not Found)
+      const rawText = await res.text().catch(() => '');
+      let helpfulMsg = `Backend server returned HTTP ${res.status} ${res.statusText}`;
+      if (res.status === 502 || res.status === 504) {
+        helpfulMsg = `PyTorch backend service is currently warming up or temporarily unavailable (HTTP ${res.status}). Please allow 10-15 seconds and try again.`;
+      } else if (res.status === 404) {
+        helpfulMsg = `The requested endpoint '${url}' was not found (HTTP 404). Ensure same-origin /api routes are routed to the FastAPI backend.`;
+      } else if (rawText && !rawText.includes('<!DOCTYPE') && rawText.length < 200) {
+        helpfulMsg += `: ${rawText.trim()}`;
+      }
+      const err = new Error(helpfulMsg);
+      err.errorType = `Server Error (HTTP ${res.status})`;
+      err.status = res.status;
+      throw err;
+    }
+  }
+
+  // Response status is 2xx OK
+  if (!isJson) {
+    // If an HTML document was returned with 200 OK (e.g. SPA index.html intercept)
+    const err = new Error(
+      `Received non-JSON response from ${url} (Content-Type: ${contentType}). The endpoint may be intercepted by a static web server.`
+    );
+    err.errorType = 'Invalid Response Format';
+    throw err;
+  }
+
+  try {
+    return await res.json();
+  } catch (jsonErr) {
+    const err = new Error(`Failed to parse backend JSON response: ${jsonErr.message}`);
+    err.errorType = 'JSON Parse Error';
+    throw err;
+  }
+}
 
 // ── Navigation Router ────────────────────────────────────────────────────────
 function switchView(viewName) {
@@ -194,17 +267,14 @@ function switchView(viewName) {
 // ── Preloaded Research Samples ───────────────────────────────────────────────
 async function loadSamples() {
   try {
-    const res = await fetch('/api/samples');
-    if (!res.ok) throw new Error('Failed to load samples');
-    const data = await res.json();
-    data.samples.forEach(s => {
-      state.samples[s.id] = s;
-    });
-
-    // Set default sample (Cancer)
-    if (state.samples.cancer) {
-      applySample('cancer');
+    const data = await safeApiRequest('/api/samples');
+    if (data && data.samples) {
+      data.samples.forEach(s => {
+        state.samples[s.id] = s;
+      });
     }
+    // Clean initial state: benchmark samples are ready in state, but workspace remains
+    // in clean upload mode until user explicitly clicks a sample or uploads an image.
   } catch (err) {
     console.error('Samples loading error:', err);
   }
@@ -216,6 +286,9 @@ function applySample(sampleId) {
 
   state.selectedSampleId = sampleId;
   state.selectedFile = null;
+  if (elements.workspaceFileInput) {
+    elements.workspaceFileInput.value = '';
+  }
 
   // Highlight active sample button
   const cancerBtn = document.getElementById('sample-cancer-btn');
@@ -230,6 +303,14 @@ function applySample(sampleId) {
     }
   }
 
+  // Reveal inspection preview panel and hide empty dropzone
+  if (elements.workspacePreviewPanel) {
+    elements.workspacePreviewPanel.classList.remove('hidden');
+  }
+  if (elements.workspaceDropzone) {
+    elements.workspaceDropzone.classList.add('hidden');
+  }
+
   elements.workspacePreviewImg.src = sample.data_uri;
   elements.workspaceFilename.textContent = sample.filename;
   elements.workspaceDim.textContent = sample.dimensions;
@@ -238,6 +319,55 @@ function applySample(sampleId) {
   elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
 
   hideAlert();
+}
+
+// ── Reset & Clean Upload State ───────────────────────────────────────────────
+function resetWorkspaceState(resetAnalysis = false) {
+  if (elements.workspaceFileInput) {
+    elements.workspaceFileInput.value = '';
+  }
+  state.selectedFile = null;
+  state.selectedSampleId = null;
+
+  // Clear sample button active highlights
+  document.querySelectorAll('.sample-select-btn').forEach(b => b.classList.remove('sample-active'));
+
+  // Reset preview panel DOM
+  if (elements.workspacePreviewImg) {
+    elements.workspacePreviewImg.src = '';
+  }
+  if (elements.workspaceFilename) {
+    elements.workspaceFilename.textContent = 'No frame loaded';
+  }
+  if (elements.workspaceDim) {
+    elements.workspaceDim.textContent = '—';
+  }
+  if (elements.workspaceFilesize) {
+    elements.workspaceFilesize.textContent = '—';
+  }
+  if (elements.workspaceStatusBadge) {
+    elements.workspaceStatusBadge.textContent = 'Pending';
+    elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
+  }
+
+  // Return to clean upload state: hide preview panel and show dropzone with Browse Image button
+  if (elements.workspacePreviewPanel) {
+    elements.workspacePreviewPanel.classList.add('hidden');
+  }
+  if (elements.workspaceDropzone) {
+    elements.workspaceDropzone.classList.remove('hidden');
+  }
+
+  hideAlert();
+
+  if (resetAnalysis) {
+    state.lastAnalysis = null;
+    const emptyState = document.getElementById('results-empty-state');
+    const contentWrapper = document.getElementById('results-content-wrapper');
+    emptyState?.classList.remove('hidden');
+    contentWrapper?.classList.add('hidden');
+    contentWrapper?.classList.remove('flex');
+  }
 }
 
 // ── Dropzone & File Upload ───────────────────────────────────────────────────
@@ -253,75 +383,50 @@ function initDropzone() {
     });
   }
 
-  dropzone.addEventListener('click', () => fileInput.click());
+  if (dropzone) {
+    dropzone.addEventListener('click', () => fileInput.click());
 
-  dropzone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropzone.classList.add('border-primary', 'bg-surface-container');
-  });
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('border-primary', 'bg-surface-container');
+    });
 
-  dropzone.addEventListener('dragleave', () => {
-    dropzone.classList.remove('border-primary', 'bg-surface-container');
-  });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('border-primary', 'bg-surface-container');
+    });
 
-  dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('border-primary', 'bg-surface-container');
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleUserFile(e.dataTransfer.files[0]);
-    }
-  });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('border-primary', 'bg-surface-container');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleUserFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
 
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files && fileInput.files[0]) {
-      handleUserFile(fileInput.files[0]);
-    }
-  });
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files && fileInput.files[0]) {
+        handleUserFile(fileInput.files[0]);
+      }
+    });
+  }
 
-  // Replace / Remove / Reset buttons
-  document.getElementById('btn-workspace-replace').addEventListener('click', () => {
+  // Replace / Remove / Reset buttons (Only shown inside active preview panel)
+  document.getElementById('btn-workspace-replace')?.addEventListener('click', () => {
     fileInput.click();
   });
 
-  document.getElementById('btn-workspace-remove').addEventListener('click', () => {
-    fileInput.value = '';
-    state.selectedFile = null;
-    state.selectedSampleId = null;
-    document.querySelectorAll('.sample-select-btn').forEach(b => b.classList.remove('sample-active'));
-    elements.workspacePreviewImg.src = '';
-    elements.workspaceFilename.textContent = 'No frame loaded';
-    elements.workspaceDim.textContent = '—';
-    elements.workspaceFilesize.textContent = '—';
-    elements.workspaceStatusBadge.textContent = 'Pending';
-    elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
-    hideAlert();
+  document.getElementById('btn-workspace-remove')?.addEventListener('click', () => {
+    resetWorkspaceState(false);
   });
 
-  const btnReset = document.getElementById('btn-workspace-reset');
-  if (btnReset) {
-    btnReset.addEventListener('click', () => {
-      fileInput.value = '';
-      if (state.samples.cancer) {
-        applySample('cancer');
-      } else {
-        state.selectedFile = null;
-        state.selectedSampleId = null;
-        elements.workspacePreviewImg.src = '';
-        elements.workspaceFilename.textContent = 'No frame loaded';
-        elements.workspaceDim.textContent = '—';
-        elements.workspaceFilesize.textContent = '—';
-        elements.workspaceStatusBadge.textContent = 'Pending';
-        elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
-      }
-      hideAlert();
-    });
-  }
+  document.getElementById('btn-workspace-reset')?.addEventListener('click', () => {
+    resetWorkspaceState(true);
+  });
 }
 
 async function handleUserFile(file) {
-  // Clear sample button highlights
-  document.querySelectorAll('.sample-select-btn').forEach(b => b.classList.remove('sample-active'));
-
   // Validate file type
   if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
     showAlert('Unsupported File Type', 'Please upload a colonoscopy frame in JPEG or PNG format.');
@@ -333,6 +438,9 @@ async function handleUserFile(file) {
     return;
   }
 
+  // Clear sample button highlights
+  document.querySelectorAll('.sample-select-btn').forEach(b => b.classList.remove('sample-active'));
+
   state.selectedFile = file;
   state.selectedSampleId = null;
 
@@ -340,6 +448,15 @@ async function handleUserFile(file) {
   const reader = new FileReader();
   reader.onload = async (e) => {
     const dataUri = e.target.result;
+
+    // Show preview panel and hide dropzone with Browse Image button
+    if (elements.workspacePreviewPanel) {
+      elements.workspacePreviewPanel.classList.remove('hidden');
+    }
+    if (elements.workspaceDropzone) {
+      elements.workspaceDropzone.classList.add('hidden');
+    }
+
     elements.workspacePreviewImg.src = dataUri;
     elements.workspaceFilename.textContent = file.name;
     const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
@@ -366,12 +483,11 @@ async function validateFile(file) {
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch('/api/validate', {
+    const data = await safeApiRequest('/api/validate', {
       method: 'POST',
       body: formData,
     });
 
-    const data = await res.json();
     if (data.is_endoscopy) {
       elements.workspaceStatusBadge.textContent = 'Validated';
       elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
@@ -386,6 +502,9 @@ async function validateFile(file) {
     }
   } catch (err) {
     console.error('Validation error:', err);
+    elements.workspaceStatusBadge.textContent = 'Check Failed';
+    elements.workspaceStatusBadge.className = 'px-2.5 py-0.5 rounded bg-amber-500 text-white font-label-sm text-label-sm uppercase flex-shrink-0 font-medium font-mono';
+    showAlert(err.errorType || 'Validation Warning', err.message);
   }
 }
 
@@ -453,31 +572,25 @@ function initAnalysisExecution() {
     elements.runBtnIcon.textContent = 'progress_activity';
     elements.runBtnIcon.classList.add('animate-spin');
     elements.runBtnText.textContent = 'Analyzing Neural Activations...';
+    hideAlert();
 
     const formData = new FormData();
     formData.append('model_choice', state.selectedModel);
     formData.append('alpha', state.blendAlpha);
     formData.append('colormap', state.selectedColormap);
 
-    if (state.selectedSampleId) {
-      formData.append('sample_id', state.selectedSampleId);
-    } else if (state.selectedFile) {
+    if (state.selectedFile) {
       formData.append('file', state.selectedFile);
+    } else if (state.selectedSampleId) {
+      formData.append('sample_id', state.selectedSampleId);
     }
 
     try {
-      const res = await fetch('/api/analyze', {
+      const result = await safeApiRequest('/api/analyze', {
         method: 'POST',
         body: formData,
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        showAlert(errData.error || 'Analysis Error', errData.message || 'An error occurred during neural inference.');
-        return;
-      }
-
-      const result = await res.json();
       state.lastAnalysis = result;
 
       // Populate Results View
@@ -490,7 +603,7 @@ function initAnalysisExecution() {
       loadHistory();
     } catch (err) {
       console.error('Inference execution error:', err);
-      showAlert('Inference Error', 'Failed to communicate with PyTorch backend: ' + err.message);
+      showAlert(err.errorType || 'Inference Error', err.message);
     } finally {
       elements.btnRunAnalysis.disabled = false;
       elements.runBtnIcon.textContent = 'biotech';
@@ -677,7 +790,15 @@ async function downloadPdfReport() {
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) throw new Error('PDF Generation failed on server');
+    if (!res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      let errMsg = `Server returned HTTP ${res.status} ${res.statusText}`;
+      if (contentType.includes('application/json')) {
+        const errJson = await res.json().catch(() => ({}));
+        errMsg = errJson.message || errJson.detail || errMsg;
+      }
+      throw new Error(errMsg);
+    }
 
     const blob = await res.blob();
     const downloadUrl = window.URL.createObjectURL(blob);
@@ -699,25 +820,23 @@ async function downloadPdfReport() {
 
 // ── Multi-Model Comparison Execution ─────────────────────────────────────────
 async function triggerMultiModelComparison() {
+  if (!state.selectedFile && !state.selectedSampleId) {
+    // If no frame is selected yet, do not trigger comparison
+    return;
+  }
+
   const formData = new FormData();
-  if (state.selectedSampleId) {
-    formData.append('sample_id', state.selectedSampleId);
-  } else if (state.selectedFile) {
+  if (state.selectedFile) {
     formData.append('file', state.selectedFile);
-  } else {
-    // Default fallback to cancer sample
-    formData.append('sample_id', 'cancer');
+  } else if (state.selectedSampleId) {
+    formData.append('sample_id', state.selectedSampleId);
   }
 
   try {
-    const res = await fetch('/api/compare', {
+    const data = await safeApiRequest('/api/compare', {
       method: 'POST',
       body: formData,
     });
-
-    if (!res.ok) return;
-
-    const data = await res.json();
     state.lastComparison = data;
 
     // Consensus Banner
@@ -763,10 +882,8 @@ async function triggerMultiModelComparison() {
 // ── Overview Retrospective History ───────────────────────────────────────────
 async function clearHistory() {
   try {
-    const res = await fetch('/api/history', { method: 'DELETE' });
-    if (res.ok) {
-      await loadHistory();
-    }
+    await safeApiRequest('/api/history', { method: 'DELETE' });
+    await loadHistory();
   } catch (err) {
     console.error('History clear error:', err);
   }
@@ -774,9 +891,7 @@ async function clearHistory() {
 
 async function loadHistory() {
   try {
-    const res = await fetch('/api/history');
-    if (!res.ok) return;
-    const data = await res.json();
+    const data = await safeApiRequest('/api/history');
     const history = data.history || [];
 
     const container = elements.overviewHistoryContainer;
@@ -885,13 +1000,10 @@ function initMenuDrawer() {
 // ── System Health & Hardware Telemetry ───────────────────────────────────────
 async function fetchSystemHealth() {
   try {
-    const res = await fetch('/api/health');
-    if (res.ok) {
-      const health = await res.json();
-      const drawerDevice = document.getElementById('drawer-device');
-      if (drawerDevice) {
-        drawerDevice.textContent = `${health.device.toUpperCase()} (Torch ${health.torch_version})`;
-      }
+    const health = await safeApiRequest('/api/health');
+    const drawerDevice = document.getElementById('drawer-device');
+    if (drawerDevice && health.device) {
+      drawerDevice.textContent = `${health.device.toUpperCase()} (Torch ${health.torch_version})`;
     }
   } catch (err) {
     console.warn('Health check warning:', err);
