@@ -23,6 +23,7 @@ Strict Rules:
 
 import os
 import sys
+import gc
 import json
 import random
 from pathlib import Path
@@ -103,7 +104,7 @@ def extract_embedding(img_path: Path, extractor: nn.Module) -> np.ndarray:
 def extract_embedding_from_pil(pil_img: Image.Image, extractor: nn.Module) -> np.ndarray:
     rgb_img = pil_img.convert("RGB")
     tensor = eval_transform(rgb_img).unsqueeze(0).to(DEVICE)
-    with torch.no_grad():
+    with torch.inference_mode():
         feat = extractor(tensor).squeeze().cpu().numpy()
     norm = np.linalg.norm(feat)
     if norm > 1e-8:
@@ -505,6 +506,10 @@ class EndoscopyValidator:
         score = float(np.dot(emb, self.centroid))
         is_endoscopy = score >= self.threshold
         margin = score - self.threshold
+
+        # Release feature extractor from memory immediately after inference to stay under 512MB RAM
+        self._extractor = None
+        gc.collect()
 
         if is_endoscopy:
             msg = "Valid Endoscopy Image (Domain match verified)"

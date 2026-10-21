@@ -132,6 +132,10 @@ def get_cached_validator() -> EndoscopyValidator:
 def get_cached_model(model_key: str):
     global _MODELS_CACHE
     if model_key not in _MODELS_CACHE:
+        # Evict any other cached models to strictly enforce <=512MB RAM on Render
+        _MODELS_CACHE.clear()
+        gc.collect()
+
         checkpoint_path = MODEL_PATHS.get(model_key)
         if checkpoint_path is None or not checkpoint_path.exists():
             raise RuntimeError(f"Model checkpoint not found for: {model_key}")
@@ -161,7 +165,7 @@ def get_cached_model(model_key: str):
         else:
             raise RuntimeError(f"Unknown model key: {model_key}")
 
-        state_dict = torch.load(checkpoint_path, map_location=DEVICE)
+        state_dict = torch.load(checkpoint_path, map_location=DEVICE, mmap=True)
         model.load_state_dict(state_dict)
         model.to(DEVICE)
         model.eval()
@@ -624,6 +628,10 @@ async def compare_all_models(
             "overlay_uri": pil_to_base64_data_uri(res["overlay_image"], quality=85),
             "heatmap_uri": pil_to_base64_data_uri(res["heatmap_image"], quality=85),
         }
+
+        # Clear each model immediately after inference to prevent concurrent RAM stacking
+        _MODELS_CACHE.clear()
+        gc.collect()
 
     # Consensus calculation
     cancer_votes = sum(1 for p in preds if p == "colorectal_cancer")

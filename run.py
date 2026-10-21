@@ -52,6 +52,19 @@ def main():
     print(f" * Web Interface: http://{args.host}:{port}/")
     print(f" * Documentation: http://{args.host}:{port}/docs")
     print("-" * 65)
+
+    # Pre-cache ImageNet-1K ResNet-50 weights before binding port to prevent request-time timeouts
+    try:
+        print("Checking/caching ImageNet-1K validator backbone on disk...")
+        import gc
+        import torchvision.models as tv_models
+        m = tv_models.resnet50(weights=tv_models.ResNet50_Weights.IMAGENET1K_V1)
+        del m
+        gc.collect()
+        print("ImageNet-1K validator weights verified and ready.")
+    except Exception as e:
+        print(f"Backbone pre-cache notice: {e}")
+
     print("Press CTRL+C to stop the platform server.")
     print("=" * 65 + "\n")
 
