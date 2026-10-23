@@ -585,18 +585,19 @@ async def compare_all_models(
     else:
         raise HTTPException(status_code=400, detail="No file or sample_id provided")
 
-    # Validate
-    validator = get_cached_validator()
-    val_res = validator.validate_image(img)
-    if not val_res["is_endoscopy"]:
-        return JSONResponse(
-            status_code=422,
-            content={
-                "error": "Out-of-Domain Image Rejected",
-                "message": f"Image failed endoscopy domain verification (Score: {val_res['domain_score']:.4f}).",
-                "is_endoscopy": False,
-            },
-        )
+    # Validate domain on uploaded custom files; benchmark samples are pre-verified
+    if file:
+        validator = get_cached_validator()
+        val_res = validator.validate_image(img)
+        if not val_res["is_endoscopy"]:
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "error": "Out-of-Domain Image Rejected",
+                    "message": f"Image failed endoscopy domain verification (Score: {val_res['domain_score']:.4f}).",
+                    "is_endoscopy": False,
+                },
+            )
 
     model_keys = ["densenet121", "resnet50", "efficientnet_b0"]
     results = {}

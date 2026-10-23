@@ -165,7 +165,7 @@ class GradCAMExtractor:
                 target_class = pred_class
 
             target_score = logits[0, target_class]
-            target_score.backward(retain_graph=True)
+            target_score.backward()
 
             grads = self.gradients.detach()
             acts = self.activations.detach()
@@ -198,3 +198,9 @@ class GradCAMExtractor:
             except Exception:
                 pass
         self.hook_handles = []
+        self.activations = None
+        self.gradients = None
+        try:
+            self.model.zero_grad(set_to_none=True)
+        except Exception:
+            pass
