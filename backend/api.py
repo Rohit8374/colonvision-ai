@@ -604,58 +604,78 @@ async def compare_all_models(
 
     for k in model_keys:
         t0 = time.time()
-        m = get_cached_model(k)
-        res = compute_gradcam_and_overlay(
-            model=m,
-            model_key=k,
-            pil_image=img,
-            alpha=0.48,
-            colormap_name="jet",
-        )
-        latency = round((time.time() - t0) * 1000, 1)
+        try:
+            m = get_cached_model(k)
+            res = compute_gradcam_and_overlay(
+                model=m,
+                model_key=k,
+                pil_image=img,
+                alpha=0.48,
+                colormap_name="jet",
+            )
+            latency = round((time.time() - t0) * 1000, 1)
 
-        pred_title = "Colorectal Carcinoma" if res["pred_name"] == "colorectal_cancer" else "Colon Diverticula"
-        preds.append(res["pred_name"])
+            pred_title = "Colorectal Carcinoma" if res["pred_name"] == "colorectal_cancer" else "Colon Diverticula"
+            preds.append(res["pred_name"])
 
-        results[k] = {
-            "key": k,
-            "name": MODEL_CONFIGS[k]["name"],
-            "params": MODEL_CONFIGS[k]["params"],
-            "prediction": pred_title,
-            "confidence": res["confidence"],
-            "confidence_pct": f"{res['confidence'] * 100:.1f}%",
-            "probabilities": res["probs"],
-            "latency_ms": latency,
-            "attribution_layer": res["target_layer"],
-            "peak_x": res["peak_x"],
-            "peak_y": res["peak_y"],
-            "overlay_uri": pil_to_base64_data_uri(res["overlay_image"], quality=85),
-            "heatmap_uri": pil_to_base64_data_uri(res["heatmap_image"], quality=85),
-        }
-
-        # Clear each model immediately after inference to prevent concurrent RAM stacking
-        _MODELS_CACHE.clear()
-        gc.collect()
+            results[k] = {
+                "key": k,
+                "name": MODEL_CONFIGS[k]["name"],
+                "params": MODEL_CONFIGS[k]["params"],
+                "prediction": pred_title,
+                "confidence": res["confidence"],
+                "confidence_pct": f"{res['confidence'] * 100:.1f}%",
+                "probabilities": res["probs"],
+                "latency_ms": latency,
+                "attribution_layer": res["target_layer"],
+                "peak_x": res["peak_x"],
+                "peak_y": res["peak_y"],
+                "overlay_uri": pil_to_base64_data_uri(res["overlay_image"], quality=85),
+                "heatmap_uri": pil_to_base64_data_uri(res["heatmap_image"], quality=85),
+                "status": "success",
+            }
+        except Exception as e:
+            latency = round((time.time() - t0) * 1000, 1)
+            results[k] = {
+                "key": k,
+                "name": MODEL_CONFIGS[k]["name"],
+                "params": MODEL_CONFIGS[k]["params"],
+                "prediction": "Evaluation Failed",
+                "confidence": 0.0,
+                "confidence_pct": "—",
+                "latency_ms": latency,
+                "attribution_layer": gradcam_layer_label(k),
+                "error": str(e),
+                "status": "error",
+            }
+        finally:
+            _MODELS_CACHE.clear()
+            gc.collect()
 
     # Consensus calculation
-    cancer_votes = sum(1 for p in preds if p == "colorectal_cancer")
-    divert_votes = sum(1 for p in preds if p == "colon_diverticula")
-    total_votes = len(preds)
+    total_valid = len(preds)
+    if total_valid > 0:
+        cancer_votes = sum(1 for p in preds if p == "colorectal_cancer")
+        divert_votes = sum(1 for p in preds if p == "colon_diverticula")
 
-    if cancer_votes == total_votes:
-        consensus_text = f"All {total_votes} models predict Colorectal Carcinoma with high agreement."
-        agreement_rate = 1.0
-        consensus_class = "Colorectal Carcinoma"
-    elif divert_votes == total_votes:
-        consensus_text = f"All {total_votes} models predict Colon Diverticula with high agreement."
-        agreement_rate = 1.0
-        consensus_class = "Colon Diverticula"
+        if cancer_votes == total_valid:
+            consensus_text = f"All {total_valid} models predict Colorectal Carcinoma with high agreement."
+            agreement_rate = 1.0
+            consensus_class = "Colorectal Carcinoma"
+        elif divert_votes == total_valid:
+            consensus_text = f"All {total_valid} models predict Colon Diverticula with high agreement."
+            agreement_rate = 1.0
+            consensus_class = "Colon Diverticula"
+        else:
+            majority = "Colorectal Carcinoma" if cancer_votes > divert_votes else "Colon Diverticula"
+            max_votes = max(cancer_votes, divert_votes)
+            consensus_text = f"{max_votes} of {total_valid} models favor {majority} (divergent activations)."
+            agreement_rate = max_votes / total_valid
+            consensus_class = majority
     else:
-        majority = "Colorectal Carcinoma" if cancer_votes > divert_votes else "Colon Diverticula"
-        max_votes = max(cancer_votes, divert_votes)
-        consensus_text = f"{max_votes} of {total_votes} models favor {majority} (divergent activations)."
-        agreement_rate = max_votes / total_votes
-        consensus_class = majority
+        agreement_rate = 0.0
+        consensus_class = "Inconclusive"
+        consensus_text = "Comparative evaluation could not be completed for the requested architectures."
 
     gc.collect()
     return {
@@ -663,7 +683,7 @@ async def compare_all_models(
             "agreement_rate": agreement_rate,
             "consensus_class": consensus_class,
             "summary": consensus_text,
-            "kappa": 0.94 if agreement_rate == 1.0 else 0.68,
+            "kappa": 0.94 if agreement_rate == 1.0 else (0.68 if agreement_rate > 0.5 else 0.0),
         },
         "models": results,
     }

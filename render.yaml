@@ -4,7 +4,7 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: "pip install -r requirements.txt && mkdir -p .torch_cache/hub/checkpoints && curl -sSL -o .torch_cache/hub/checkpoints/resnet50-0676ba61.pth https://download.pytorch.org/models/resnet50-0676ba61.pth"
+    buildCommand: "pip install -r requirements.txt && python -c 'import torchvision.models as m; m.resnet50(weights=m.ResNet50_Weights.IMAGENET1K_V1)'"
     startCommand: "python run.py"
     healthCheckPath: /api/health
     envVars:

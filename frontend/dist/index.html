@@ -112,7 +112,7 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-D7ZdH3QY.js"></script>
+  <script type="module" crossorigin src="/assets/index-BrdqytHr.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-CgK77__v.css">
 </head>
 
@@ -957,6 +957,33 @@
         </button>
       </section>
 
+      <!-- Selected Frame Indicator & Benchmark Selector -->
+      <section id="compare-frame-banner" class="bg-surface-container-lowest rounded-xl p-3.5 shadow-xs border border-outline-variant/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+            <span class="material-symbols-outlined text-[20px]">image</span>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-headline-sm text-body-sm font-semibold text-on-surface">Target Frame:</span>
+              <span id="compare-current-frame-name" class="font-mono text-body-sm text-primary font-semibold truncate">No frame selected</span>
+            </div>
+            <span id="compare-current-frame-desc" class="font-body-sm text-[11px] text-secondary">Select a benchmark sample or upload a frame to run comparative inference.</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="compare-select-cancer-btn" type="button" class="px-2.5 py-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-mono text-[11px] font-medium border border-outline-variant/40 active:scale-95 transition-all">
+            Load Cancer Sample
+          </button>
+          <button id="compare-select-divert-btn" type="button" class="px-2.5 py-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-mono text-[11px] font-medium border border-outline-variant/40 active:scale-95 transition-all">
+            Load Diverticula Sample
+          </button>
+          <button id="compare-goto-analyze-btn" type="button" class="px-2.5 py-1.5 rounded-lg bg-primary-container text-on-primary font-mono text-[11px] font-medium shadow-xs active:scale-95 transition-all">
+            Browse Custom Image
+          </button>
+        </div>
+      </section>
+
       <!-- Consensus Banner -->
       <section class="bg-primary-container rounded-xl p-4 shadow-xs text-on-primary border border-primary/20">
         <div class="flex items-start gap-3">
@@ -984,37 +1011,49 @@
           
           <!-- Thumbnail 1: DenseNet-121 -->
           <div class="flex flex-col gap-2 p-2.5 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
-            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas">
-              <img id="footprint-densenet" class="w-full h-full object-cover" src="" alt="DenseNet footprint" />
+            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas flex items-center justify-center bg-surface-container">
+              <div id="footprint-loading-densenet" class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-surface-container-low text-secondary p-3 text-center">
+                <span class="material-symbols-outlined text-[24px] text-secondary">center_focus_strong</span>
+                <span class="font-label-sm text-[11px] text-secondary">Awaiting frame selection</span>
+              </div>
+              <img id="footprint-densenet" class="w-full h-full object-cover hidden" src="" alt="DenseNet footprint" />
               <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-tertiary/90 text-surface-container-lowest font-label-sm text-label-sm font-mono backdrop-blur-xs border border-white/10">DenseNet</span>
             </div>
             <div class="flex flex-col px-0.5">
-              <span class="font-label-sm text-label-sm font-bold text-on-surface truncate">features.denseblock4</span>
-              <span class="font-label-sm text-[11px] text-secondary truncate">Ulceration margin</span>
+              <span id="footprint-layer-densenet" class="font-label-sm text-label-sm font-bold text-on-surface truncate">features.denseblock4</span>
+              <span id="footprint-desc-densenet" class="font-label-sm text-[11px] text-secondary truncate">Dense gradient reuse attribution</span>
             </div>
           </div>
 
           <!-- Thumbnail 2: ResNet-50 -->
           <div class="flex flex-col gap-2 p-2.5 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
-            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas">
-              <img id="footprint-resnet" class="w-full h-full object-cover" src="" alt="ResNet footprint" />
+            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas flex items-center justify-center bg-surface-container">
+              <div id="footprint-loading-resnet" class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-surface-container-low text-secondary p-3 text-center">
+                <span class="material-symbols-outlined text-[24px] text-secondary">center_focus_strong</span>
+                <span class="font-label-sm text-[11px] text-secondary">Awaiting frame selection</span>
+              </div>
+              <img id="footprint-resnet" class="w-full h-full object-cover hidden" src="" alt="ResNet footprint" />
               <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-tertiary/90 text-surface-container-lowest font-label-sm text-label-sm font-mono backdrop-blur-xs border border-white/10">ResNet-50</span>
             </div>
             <div class="flex flex-col px-0.5">
-              <span class="font-label-sm text-label-sm font-bold text-on-surface truncate">layer4[-1]</span>
-              <span class="font-label-sm text-[11px] text-secondary truncate">Central lesion</span>
+              <span id="footprint-layer-resnet" class="font-label-sm text-label-sm font-bold text-on-surface truncate">layer4[-1]</span>
+              <span id="footprint-desc-resnet" class="font-label-sm text-[11px] text-secondary truncate">Residual bottleneck attribution</span>
             </div>
           </div>
 
           <!-- Thumbnail 3: EfficientNet-B0 -->
           <div class="flex flex-col gap-2 p-2.5 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
-            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas">
-              <img id="footprint-efficientnet" class="w-full h-full object-cover" src="" alt="EfficientNet footprint" />
+            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas flex items-center justify-center bg-surface-container">
+              <div id="footprint-loading-efficientnet" class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-surface-container-low text-secondary p-3 text-center">
+                <span class="material-symbols-outlined text-[24px] text-secondary">center_focus_strong</span>
+                <span class="font-label-sm text-[11px] text-secondary">Awaiting frame selection</span>
+              </div>
+              <img id="footprint-efficientnet" class="w-full h-full object-cover hidden" src="" alt="EfficientNet footprint" />
               <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-tertiary/90 text-surface-container-lowest font-label-sm text-label-sm font-mono backdrop-blur-xs border border-white/10">EffNet-B0</span>
             </div>
             <div class="flex flex-col px-0.5">
-              <span class="font-label-sm text-label-sm font-bold text-on-surface truncate">features[-1]</span>
-              <span class="font-label-sm text-[11px] text-secondary truncate">Vascular edge</span>
+              <span id="footprint-layer-efficientnet" class="font-label-sm text-label-sm font-bold text-on-surface truncate">features[-1]</span>
+              <span id="footprint-desc-efficientnet" class="font-label-sm text-[11px] text-secondary truncate">Compound scaled MBConv attribution</span>
             </div>
           </div>
         </div>
@@ -1024,7 +1063,7 @@
       <section class="flex flex-col gap-3">
         <div class="flex items-center justify-between px-0.5">
           <span class="font-label-md text-label-md uppercase tracking-wider text-secondary font-semibold">Inference Diagnostics</span>
-          <span class="font-label-sm text-label-sm text-secondary font-mono">Sorted by Macro-F1</span>
+          <span class="font-label-sm text-label-sm text-secondary font-mono">Independent Model Architecture Evaluation</span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1035,7 +1074,7 @@
               <div class="flex flex-col min-w-0">
                 <div class="flex items-center gap-1.5">
                   <span class="font-headline-sm text-headline-sm font-semibold text-on-surface">DenseNet-121</span>
-                  <span class="px-1.5 py-0.5 rounded bg-primary-container text-surface-container-lowest font-label-sm text-[10px] font-mono">Primary</span>
+                  <span id="compare-status-badge-densenet" class="px-1.5 py-0.5 rounded bg-primary-container text-surface-container-lowest font-label-sm text-[10px] font-mono">Primary</span>
                 </div>
                 <span class="font-body-sm text-body-sm text-secondary truncate">Dense gradient reuse</span>
               </div>
@@ -1045,12 +1084,12 @@
               </div>
             </div>
             <div class="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
-              <div id="compare-bar-densenet" class="h-full bg-primary-container rounded-full" style="width: 0%;"></div>
+              <div id="compare-bar-densenet" class="h-full bg-primary-container rounded-full transition-all duration-500" style="width: 0%;"></div>
             </div>
             <div class="grid grid-cols-2 gap-2 pt-1 font-mono">
               <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
                 <span class="font-label-sm text-label-sm text-secondary">Target Layer</span>
-                <span class="font-label-md text-label-md font-semibold text-on-surface truncate">denseblock4</span>
+                <span id="compare-layer-densenet" class="font-label-md text-label-md font-semibold text-on-surface truncate">denseblock4</span>
               </div>
               <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
                 <span class="font-label-sm text-label-sm text-secondary">Latency</span>
@@ -1069,7 +1108,7 @@
               <div class="flex flex-col min-w-0">
                 <div class="flex items-center gap-1.5">
                   <span class="font-headline-sm text-headline-sm font-semibold text-on-surface">ResNet-50</span>
-                  <span class="px-1.5 py-0.5 rounded bg-surface-container text-on-secondary-container font-label-sm text-[10px] font-mono">Reference</span>
+                  <span id="compare-status-badge-resnet" class="px-1.5 py-0.5 rounded bg-surface-container text-on-secondary-container font-label-sm text-[10px] font-mono">Reference</span>
                 </div>
                 <span class="font-body-sm text-body-sm text-secondary truncate">Deep residual skips</span>
               </div>
@@ -1079,12 +1118,12 @@
               </div>
             </div>
             <div class="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
-              <div id="compare-bar-resnet" class="h-full bg-primary-container/80 rounded-full" style="width: 0%;"></div>
+              <div id="compare-bar-resnet" class="h-full bg-primary-container/80 rounded-full transition-all duration-500" style="width: 0%;"></div>
             </div>
             <div class="grid grid-cols-2 gap-2 pt-1 font-mono">
               <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
                 <span class="font-label-sm text-label-sm text-secondary">Target Layer</span>
-                <span class="font-label-md text-label-md font-semibold text-on-surface truncate">layer4[-1]</span>
+                <span id="compare-layer-resnet" class="font-label-md text-label-md font-semibold text-on-surface truncate">layer4[-1]</span>
               </div>
               <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
                 <span class="font-label-sm text-label-sm text-secondary">Latency</span>
@@ -1103,7 +1142,7 @@
               <div class="flex flex-col min-w-0">
                 <div class="flex items-center gap-1.5">
                   <span class="font-headline-sm text-headline-sm font-semibold text-on-surface">EfficientNet-B0</span>
-                  <span class="px-1.5 py-0.5 rounded bg-surface-container text-on-secondary-container font-label-sm text-[10px] font-mono">Lightweight</span>
+                  <span id="compare-status-badge-efficientnet" class="px-1.5 py-0.5 rounded bg-surface-container text-on-secondary-container font-label-sm text-[10px] font-mono">Lightweight</span>
                 </div>
                 <span class="font-body-sm text-body-sm text-secondary truncate">Compound scaling</span>
               </div>
@@ -1113,12 +1152,12 @@
               </div>
             </div>
             <div class="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
-              <div id="compare-bar-efficientnet" class="h-full bg-primary-container/80 rounded-full" style="width: 0%;"></div>
+              <div id="compare-bar-efficientnet" class="h-full bg-primary-container/80 rounded-full transition-all duration-500" style="width: 0%;"></div>
             </div>
             <div class="grid grid-cols-2 gap-2 pt-1 font-mono">
               <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
                 <span class="font-label-sm text-label-sm text-secondary">Target Layer</span>
-                <span class="font-label-md text-label-md font-semibold text-on-surface truncate">features[-1]</span>
+                <span id="compare-layer-efficientnet" class="font-label-md text-label-md font-semibold text-on-surface truncate">features[-1]</span>
               </div>
               <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
                 <span class="font-label-sm text-label-sm text-secondary">Latency</span>

@@ -93,21 +93,35 @@ const elements = {
   // Comparison Elements
   compareConsensusTitle: document.getElementById('compare-consensus-title'),
   compareConsensusDesc: document.getElementById('compare-consensus-desc'),
+  compareCurrentFrameName: document.getElementById('compare-current-frame-name'),
+  compareCurrentFrameDesc: document.getElementById('compare-current-frame-desc'),
   footprintDensenet: document.getElementById('footprint-densenet'),
   footprintResnet: document.getElementById('footprint-resnet'),
   footprintEfficientnet: document.getElementById('footprint-efficientnet'),
+  footprintLoadingDensenet: document.getElementById('footprint-loading-densenet'),
+  footprintLoadingResnet: document.getElementById('footprint-loading-resnet'),
+  footprintLoadingEfficientnet: document.getElementById('footprint-loading-efficientnet'),
+  footprintLayerDensenet: document.getElementById('footprint-layer-densenet'),
+  footprintLayerResnet: document.getElementById('footprint-layer-resnet'),
+  footprintLayerEfficientnet: document.getElementById('footprint-layer-efficientnet'),
   compareConfDensenet: document.getElementById('compare-conf-densenet'),
   comparePredDensenet: document.getElementById('compare-pred-densenet'),
   compareBarDensenet: document.getElementById('compare-bar-densenet'),
   compareLatDensenet: document.getElementById('compare-lat-densenet'),
+  compareLayerDensenet: document.getElementById('compare-layer-densenet'),
+  compareStatusBadgeDensenet: document.getElementById('compare-status-badge-densenet'),
   compareConfResnet: document.getElementById('compare-conf-resnet'),
   comparePredResnet: document.getElementById('compare-pred-resnet'),
   compareBarResnet: document.getElementById('compare-bar-resnet'),
   compareLatResnet: document.getElementById('compare-lat-resnet'),
+  compareLayerResnet: document.getElementById('compare-layer-resnet'),
+  compareStatusBadgeResnet: document.getElementById('compare-status-badge-resnet'),
   compareConfEfficientnet: document.getElementById('compare-conf-efficientnet'),
   comparePredEfficientnet: document.getElementById('compare-pred-efficientnet'),
   compareBarEfficientnet: document.getElementById('compare-bar-efficientnet'),
   compareLatEfficientnet: document.getElementById('compare-lat-efficientnet'),
+  compareLayerEfficientnet: document.getElementById('compare-layer-efficientnet'),
+  compareStatusBadgeEfficientnet: document.getElementById('compare-status-badge-efficientnet'),
 };
 
 /**
@@ -836,11 +850,134 @@ async function downloadPdfReport() {
 
 // ── Multi-Model Comparison Execution ─────────────────────────────────────────
 async function triggerMultiModelComparison() {
+  const models = [
+    {
+      key: 'densenet121',
+      name: 'DenseNet-121',
+      img: elements.footprintDensenet,
+      loading: elements.footprintLoadingDensenet,
+      layerFootprint: elements.footprintLayerDensenet,
+      conf: elements.compareConfDensenet,
+      pred: elements.comparePredDensenet,
+      bar: elements.compareBarDensenet,
+      lat: elements.compareLatDensenet,
+      layerCard: elements.compareLayerDensenet,
+      badge: elements.compareStatusBadgeDensenet,
+    },
+    {
+      key: 'resnet50',
+      name: 'ResNet-50',
+      img: elements.footprintResnet,
+      loading: elements.footprintLoadingResnet,
+      layerFootprint: elements.footprintLayerResnet,
+      conf: elements.compareConfResnet,
+      pred: elements.comparePredResnet,
+      bar: elements.compareBarResnet,
+      lat: elements.compareLatResnet,
+      layerCard: elements.compareLayerResnet,
+      badge: elements.compareStatusBadgeResnet,
+    },
+    {
+      key: 'efficientnet_b0',
+      name: 'EfficientNet-B0',
+      img: elements.footprintEfficientnet,
+      loading: elements.footprintLoadingEfficientnet,
+      layerFootprint: elements.footprintLayerEfficientnet,
+      conf: elements.compareConfEfficientnet,
+      pred: elements.comparePredEfficientnet,
+      bar: elements.compareBarEfficientnet,
+      lat: elements.compareLatEfficientnet,
+      layerCard: elements.compareLayerEfficientnet,
+      badge: elements.compareStatusBadgeEfficientnet,
+    },
+  ];
+
+  // 1. Verify frame selection
   if (!state.selectedFile && !state.selectedSampleId) {
-    // If no frame is selected yet, do not trigger comparison
+    if (elements.compareCurrentFrameName) {
+      elements.compareCurrentFrameName.textContent = 'No frame selected';
+    }
+    if (elements.compareCurrentFrameDesc) {
+      elements.compareCurrentFrameDesc.textContent = 'Please choose a benchmark sample below or upload an image to run multi-model comparative inference.';
+    }
+    if (elements.compareConsensusTitle) {
+      elements.compareConsensusTitle.textContent = 'Comparative Consensus: Awaiting Frame Selection';
+    }
+    if (elements.compareConsensusDesc) {
+      elements.compareConsensusDesc.textContent = 'Select a benchmark sample or upload a colonoscopy frame on the Analyze page to compare attribution footprints across architectures.';
+    }
+    models.forEach(m => {
+      if (m.img) m.img.classList.add('hidden');
+      if (m.loading) {
+        m.loading.classList.remove('hidden');
+        m.loading.innerHTML = `
+          <span class="material-symbols-outlined text-[24px] text-secondary">center_focus_strong</span>
+          <span class="font-label-sm text-[11px] text-secondary">Awaiting frame selection</span>
+        `;
+      }
+      if (m.badge) {
+        m.badge.textContent = 'Standby';
+        m.badge.className = 'px-1.5 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-[10px] font-mono';
+      }
+      if (m.pred) {
+        m.pred.textContent = 'Standby';
+        m.pred.className = 'font-label-sm text-label-sm text-secondary';
+      }
+      if (m.conf) m.conf.textContent = '—';
+      if (m.lat) m.lat.textContent = '—';
+      if (m.bar) m.bar.style.width = '0%';
+    });
     return;
   }
 
+  // 2. Update frame banner
+  if (state.selectedFile) {
+    if (elements.compareCurrentFrameName) elements.compareCurrentFrameName.textContent = state.selectedFile.name;
+    if (elements.compareCurrentFrameDesc) elements.compareCurrentFrameDesc.textContent = 'Custom upload frame • Ready for multi-model cross-architecture evaluation.';
+  } else if (state.selectedSampleId) {
+    const sMeta = state.samples[state.selectedSampleId];
+    if (elements.compareCurrentFrameName) elements.compareCurrentFrameName.textContent = sMeta ? sMeta.filename : `${state.selectedSampleId}.jpg`;
+    if (elements.compareCurrentFrameDesc) elements.compareCurrentFrameDesc.textContent = sMeta ? sMeta.morphology : 'Clinical research benchmark sample.';
+  }
+
+  // 3. Set Loading State on All Models
+  const btnRerun = document.getElementById('btn-rerun-compare');
+  const rerunIcon = document.getElementById('rerun-compare-icon');
+  const rerunText = document.getElementById('rerun-compare-text');
+  if (btnRerun) btnRerun.disabled = true;
+  rerunIcon?.classList.add('animate-spin');
+  if (rerunText) rerunText.textContent = 'Comparing Models...';
+
+  if (elements.compareConsensusTitle) {
+    elements.compareConsensusTitle.textContent = 'Multi-Model Inference in Progress';
+  }
+  if (elements.compareConsensusDesc) {
+    elements.compareConsensusDesc.textContent = 'Evaluating DenseNet-121, ResNet-50, and EfficientNet-B0 activations on the current frame...';
+  }
+
+  models.forEach(m => {
+    if (m.img) m.img.classList.add('hidden');
+    if (m.loading) {
+      m.loading.classList.remove('hidden');
+      m.loading.innerHTML = `
+        <span class="material-symbols-outlined text-[24px] text-primary-container animate-spin">progress_activity</span>
+        <span class="font-label-sm text-[11px] text-primary-container font-mono">Computing activations...</span>
+      `;
+    }
+    if (m.badge) {
+      m.badge.textContent = 'Evaluating';
+      m.badge.className = 'px-1.5 py-0.5 rounded bg-primary-container/20 text-primary-container font-label-sm text-[10px] font-mono animate-pulse';
+    }
+    if (m.pred) {
+      m.pred.textContent = 'Computing...';
+      m.pred.className = 'font-label-sm text-label-sm text-primary font-mono';
+    }
+    if (m.conf) m.conf.textContent = '...';
+    if (m.lat) m.lat.textContent = '...';
+    if (m.bar) m.bar.style.width = '0%';
+  });
+
+  // 4. Execute Backend Comparative Request
   const formData = new FormData();
   if (state.selectedFile) {
     formData.append('file', state.selectedFile);
@@ -856,42 +993,109 @@ async function triggerMultiModelComparison() {
     state.lastComparison = data;
 
     // Consensus Banner
-    elements.compareConsensusTitle.textContent = data.consensus.agreement_rate === 1.0
-      ? 'Model Consensus: High Agreement'
-      : 'Model Consensus: Divergent Agreement';
-    elements.compareConsensusDesc.innerHTML = `${data.consensus.summary} (Concordance κ = ${data.consensus.kappa}).`;
-
-    // DenseNet-121
-    if (data.models.densenet121) {
-      const m = data.models.densenet121;
-      elements.footprintDensenet.src = m.overlay_uri;
-      elements.compareConfDensenet.textContent = m.confidence_pct;
-      elements.comparePredDensenet.textContent = m.prediction.replace('Colorectal ', '').replace('Colon ', '');
-      elements.compareBarDensenet.style.width = m.confidence_pct;
-      elements.compareLatDensenet.textContent = `${m.latency_ms} ms`;
+    if (data.consensus) {
+      if (elements.compareConsensusTitle) {
+        elements.compareConsensusTitle.textContent = data.consensus.agreement_rate === 1.0
+          ? 'Model Consensus: High Agreement'
+          : (data.consensus.agreement_rate > 0.5 ? 'Model Consensus: Majority Agreement' : 'Model Consensus: Inconclusive');
+      }
+      if (elements.compareConsensusDesc) {
+        elements.compareConsensusDesc.innerHTML = `${data.consensus.summary} (Concordance κ = ${data.consensus.kappa}).`;
+      }
     }
 
-    // ResNet-50
-    if (data.models.resnet50) {
-      const m = data.models.resnet50;
-      elements.footprintResnet.src = m.overlay_uri;
-      elements.compareConfResnet.textContent = m.confidence_pct;
-      elements.comparePredResnet.textContent = m.prediction.replace('Colorectal ', '').replace('Colon ', '');
-      elements.compareBarResnet.style.width = m.confidence_pct;
-      elements.compareLatResnet.textContent = `${m.latency_ms} ms`;
-    }
-
-    // EfficientNet-B0
-    if (data.models.efficientnet_b0) {
-      const m = data.models.efficientnet_b0;
-      elements.footprintEfficientnet.src = m.overlay_uri;
-      elements.compareConfEfficientnet.textContent = m.confidence_pct;
-      elements.comparePredEfficientnet.textContent = m.prediction.replace('Colorectal ', '').replace('Colon ', '');
-      elements.compareBarEfficientnet.style.width = m.confidence_pct;
-      elements.compareLatEfficientnet.textContent = `${m.latency_ms} ms`;
-    }
+    // Process each model independently (fault tolerance)
+    models.forEach(m => {
+      const res = data.models ? data.models[m.key] : null;
+      if (res && res.status !== 'error' && (res.overlay_uri || res.heatmap_uri)) {
+        const imgSrc = res.overlay_uri || res.heatmap_uri;
+        if (m.img) {
+          m.img.onload = () => {
+            m.img.classList.remove('hidden');
+            if (m.loading) m.loading.classList.add('hidden');
+          };
+          m.img.onerror = () => {
+            m.img.classList.add('hidden');
+            if (m.loading) {
+              m.loading.classList.remove('hidden');
+              m.loading.innerHTML = `
+                <span class="material-symbols-outlined text-error text-[24px]">broken_image</span>
+                <span class="text-error font-label-sm text-[11px] font-mono">Image render error</span>
+              `;
+            }
+          };
+          m.img.src = imgSrc;
+        }
+        if (m.conf) m.conf.textContent = res.confidence_pct || `${Math.round(res.confidence * 100)}%`;
+        const isCancer = (res.prediction || '').toLowerCase().includes('cancer') || (res.prediction || '').toLowerCase().includes('carcinoma');
+        if (m.pred) {
+          m.pred.textContent = isCancer ? 'Carcinoma' : 'Diverticula';
+          m.pred.className = 'font-label-sm text-label-sm font-semibold ' + (isCancer ? 'text-error' : 'text-primary');
+        }
+        if (m.bar) m.bar.style.width = res.confidence_pct || `${Math.round(res.confidence * 100)}%`;
+        if (m.lat) m.lat.textContent = `${res.latency_ms} ms`;
+        if (m.layerCard && res.attribution_layer) m.layerCard.textContent = res.attribution_layer;
+        if (m.layerFootprint && res.attribution_layer) m.layerFootprint.textContent = res.attribution_layer;
+        if (m.badge) {
+          m.badge.textContent = 'Evaluated';
+          m.badge.className = 'px-1.5 py-0.5 rounded bg-primary-container text-surface-container-lowest font-label-sm text-[10px] font-mono';
+        }
+      } else {
+        // Individual model failure
+        if (m.img) m.img.classList.add('hidden');
+        if (m.loading) {
+          m.loading.classList.remove('hidden');
+          m.loading.innerHTML = `
+            <span class="material-symbols-outlined text-error text-[24px]">error</span>
+            <span class="text-error font-label-sm text-[11px] font-mono">${res?.error || 'Inference failed'}</span>
+          `;
+        }
+        if (m.badge) {
+          m.badge.textContent = 'Failed';
+          m.badge.className = 'px-1.5 py-0.5 rounded bg-error text-white font-label-sm text-[10px] font-mono';
+        }
+        if (m.pred) {
+          m.pred.textContent = 'Failed';
+          m.pred.className = 'font-label-sm text-label-sm font-semibold text-error';
+        }
+        if (m.conf) m.conf.textContent = '—';
+        if (m.lat) m.lat.textContent = res && res.latency_ms ? `${res.latency_ms} ms` : '—';
+        if (m.bar) m.bar.style.width = '0%';
+      }
+    });
   } catch (err) {
-    console.error('Comparative models error:', err);
+    console.error('Comparative models request error:', err);
+    if (elements.compareConsensusTitle) {
+      elements.compareConsensusTitle.textContent = 'Comparison Failed';
+    }
+    if (elements.compareConsensusDesc) {
+      elements.compareConsensusDesc.textContent = `Inference engine error: ${err.message}`;
+    }
+    models.forEach(m => {
+      if (m.img) m.img.classList.add('hidden');
+      if (m.loading) {
+        m.loading.classList.remove('hidden');
+        m.loading.innerHTML = `
+          <span class="material-symbols-outlined text-error text-[24px]">cloud_off</span>
+          <span class="text-error font-label-sm text-[11px] font-mono">Service unavailable</span>
+        `;
+      }
+      if (m.badge) {
+        m.badge.textContent = 'Error';
+        m.badge.className = 'px-1.5 py-0.5 rounded bg-error text-white font-label-sm text-[10px] font-mono';
+      }
+      if (m.pred) {
+        m.pred.textContent = 'Unavailable';
+        m.pred.className = 'font-label-sm text-label-sm font-semibold text-error';
+      }
+      if (m.conf) m.conf.textContent = '—';
+      if (m.lat) m.lat.textContent = '—';
+      if (m.bar) m.bar.style.width = '0%';
+    });
+  } finally {
+    if (btnRerun) btnRerun.disabled = false;
+    rerunIcon?.classList.remove('animate-spin');
+    if (rerunText) rerunText.textContent = 'Re-run Comparison';
   }
 }
 
@@ -1043,19 +1247,28 @@ function initOverviewCtas() {
   document.getElementById('sample-cancer-btn')?.addEventListener('click', () => applySample('cancer'));
   document.getElementById('sample-diverticula-btn')?.addEventListener('click', () => applySample('diverticula'));
 
+  // Quick benchmark selectors on Comparative Models page
+  document.getElementById('compare-select-cancer-btn')?.addEventListener('click', async () => {
+    await applySample('cancer');
+    await triggerMultiModelComparison();
+  });
+  document.getElementById('compare-select-divert-btn')?.addEventListener('click', async () => {
+    await applySample('diverticula');
+    await triggerMultiModelComparison();
+  });
+  document.getElementById('compare-goto-analyze-btn')?.addEventListener('click', () => {
+    switchView('analyze');
+  });
+
   // Re-run comparison button
   const btnRerun = document.getElementById('btn-rerun-compare');
   if (btnRerun) {
     btnRerun.addEventListener('click', async () => {
-      const icon = document.getElementById('rerun-compare-icon');
-      const text = document.getElementById('rerun-compare-text');
-      btnRerun.disabled = true;
-      icon?.classList.add('animate-spin');
-      if (text) text.textContent = 'Comparing Models...';
+      if (!state.selectedFile && !state.selectedSampleId) {
+        alert('Please select a benchmark sample or upload a colonoscopy frame first.');
+        return;
+      }
       await triggerMultiModelComparison();
-      icon?.classList.remove('animate-spin');
-      if (text) text.textContent = 'Re-run Comparison';
-      btnRerun.disabled = false;
     });
   }
 

@@ -69,15 +69,21 @@ if not os.environ.get("TORCH_HOME"):
 
 # ── Feature Extractor Builder ─────────────────────────────────────────────────
 def get_feature_extractor():
-    # If checkpoint exists in local persistent TORCH_HOME, load directly with mmap without network latency
-    local_ckpt = Path(os.environ.get("TORCH_HOME", str(PROJECT_ROOT / ".torch_cache"))) / "hub" / "checkpoints" / "resnet50-0676ba61.pth"
-    if not local_ckpt.exists():
-        # Also check standard user cache
-        user_ckpt = Path.home() / ".cache" / "torch" / "hub" / "checkpoints" / "resnet50-0676ba61.pth"
-        if user_ckpt.exists():
-            local_ckpt = user_ckpt
+    candidates = [
+        Path(os.environ.get("TORCH_HOME", "")) / "hub" / "checkpoints" / "resnet50-0676ba61.pth",
+        Path(os.environ.get("TORCH_HOME", "")) / "checkpoints" / "resnet50-0676ba61.pth",
+        PROJECT_ROOT / ".torch_cache" / "hub" / "checkpoints" / "resnet50-0676ba61.pth",
+        PROJECT_ROOT / ".torch_cache" / "checkpoints" / "resnet50-0676ba61.pth",
+        Path.home() / ".cache" / "torch" / "hub" / "checkpoints" / "resnet50-0676ba61.pth",
+        Path.home() / ".cache" / "torch" / "checkpoints" / "resnet50-0676ba61.pth",
+    ]
+    local_ckpt = None
+    for c in candidates:
+        if c.exists() and c.stat().st_size > 10000000:
+            local_ckpt = c
+            break
 
-    if local_ckpt.exists() and local_ckpt.stat().st_size > 100000000:
+    if local_ckpt:
         base_model = models.resnet50(weights=None)
         state_dict = torch.load(local_ckpt, map_location="cpu", mmap=True)
         base_model.load_state_dict(state_dict)
@@ -100,6 +106,10 @@ def get_feature_extractor():
     base_model.to(DEVICE)
     # Remove final classification linear layer, retain pooling -> 2048-dim embedding
     feature_extractor = nn.Sequential(*list(base_model.children())[:-1], nn.Flatten())
+    try:
+        feature_extractor = feature_extractor.to(torch.bfloat16)
+    except Exception:
+        pass
     return feature_extractor
 
 
@@ -531,9 +541,7 @@ class EndoscopyValidator:
         is_endoscopy = score >= self.threshold
         margin = score - self.threshold
 
-        # Release feature extractor from memory immediately after inference to stay under 512MB RAM
-        self._extractor = None
-        gc.collect()
+        # Extractor is kept cached in memory in bfloat16 (~48MB) for sub-second responses
 
         if is_endoscopy:
             msg = "Valid Endoscopy Image (Domain match verified)"

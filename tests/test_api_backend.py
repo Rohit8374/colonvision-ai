@@ -103,6 +103,14 @@ def test_backend_api():
     assert "consensus" in compare_data
     assert "models" in compare_data
     assert len(compare_data["models"]) == 3
+    for m_key in ["densenet121", "resnet50", "efficientnet_b0"]:
+        assert m_key in compare_data["models"], f"Missing {m_key} in comparison results"
+        m_res = compare_data["models"][m_key]
+        assert m_res["status"] == "success", f"Model {m_key} did not succeed: {m_res}"
+        assert "overlay_uri" in m_res and m_res["overlay_uri"].startswith("data:image/jpeg;base64,"), f"Invalid overlay for {m_key}"
+        assert "confidence" in m_res and m_res["confidence"] > 0
+        assert "latency_ms" in m_res and m_res["latency_ms"] > 0
+        assert "attribution_layer" in m_res and len(m_res["attribution_layer"]) > 0
     print(f"   [PASS] Consensus: {compare_data['consensus']['summary']}")
     print(f"          Concordance kappa: {compare_data['consensus']['kappa']}")
 
