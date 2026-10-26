@@ -948,7 +948,7 @@
             </span>
           </div>
           <h1 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">Multi-Model Comparative Inference</h1>
-          <p class="font-body-sm text-body-sm text-secondary leading-relaxed">Side-by-side evaluation of ResNet-50, DenseNet-121, and EfficientNet-B0 on the current frame.</p>
+          <p class="font-body-sm text-body-sm text-secondary leading-relaxed">Side-by-side evaluation of DenseNet-121 and ResNet-50 on the current frame.</p>
         </div>
         <button id="btn-rerun-compare" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-primary font-headline-sm text-body-sm font-medium border border-outline-variant/40 shadow-xs active:scale-95 transition-all">
           <span class="material-symbols-outlined text-[18px]" id="rerun-compare-icon">sync</span>
@@ -994,7 +994,7 @@
               <span id="compare-consensus-title" class="font-headline-sm text-headline-sm font-semibold tracking-tight text-surface-container-lowest">Comparative Consensus</span>
             </div>
             <p id="compare-consensus-desc" class="font-body-sm text-body-sm text-on-primary-container mt-0.5 leading-relaxed">
-              Evaluating current endoscopic frame across ResNet-50, DenseNet-121, and EfficientNet-B0 architectures.
+              Evaluating current endoscopic frame across DenseNet-121 and ResNet-50 architectures.
             </p>
           </div>
         </div>
@@ -1006,17 +1006,17 @@
           <span class="font-label-md text-label-md uppercase tracking-wider text-secondary font-semibold">Grad-CAM Attribution Footprints</span>
           <span class="font-label-sm text-label-sm text-primary-container font-semibold font-mono">Normalized Jet colormap</span>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           
           <!-- Thumbnail 1: DenseNet-121 -->
-          <div class="flex flex-col gap-2 p-2.5 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
+          <div class="flex flex-col gap-2 p-3 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
             <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas flex items-center justify-center bg-surface-container">
               <div id="footprint-loading-densenet" class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-surface-container-low text-secondary p-3 text-center">
                 <span class="material-symbols-outlined text-[24px] text-secondary">center_focus_strong</span>
                 <span class="font-label-sm text-[11px] text-secondary">Awaiting frame selection</span>
               </div>
               <img id="footprint-densenet" class="w-full h-full object-cover hidden" src="" alt="DenseNet footprint" />
-              <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-tertiary/90 text-surface-container-lowest font-label-sm text-label-sm font-mono backdrop-blur-xs border border-white/10">DenseNet</span>
+              <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-tertiary/90 text-surface-container-lowest font-label-sm text-label-sm font-mono backdrop-blur-xs border border-white/10">DenseNet-121</span>
             </div>
             <div class="flex flex-col px-0.5">
               <span id="footprint-layer-densenet" class="font-label-sm text-label-sm font-bold text-on-surface truncate">features.denseblock4</span>
@@ -1025,7 +1025,7 @@
           </div>
 
           <!-- Thumbnail 2: ResNet-50 -->
-          <div class="flex flex-col gap-2 p-2.5 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
+          <div class="flex flex-col gap-2 p-3 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
             <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas flex items-center justify-center bg-surface-container">
               <div id="footprint-loading-resnet" class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-surface-container-low text-secondary p-3 text-center">
                 <span class="material-symbols-outlined text-[24px] text-secondary">center_focus_strong</span>
@@ -1039,22 +1039,6 @@
               <span id="footprint-desc-resnet" class="font-label-sm text-[11px] text-secondary truncate">Residual bottleneck attribution</span>
             </div>
           </div>
-
-          <!-- Thumbnail 3: EfficientNet-B0 -->
-          <div class="flex flex-col gap-2 p-2.5 bg-surface-container-lowest rounded-xl shadow-xs border border-outline-variant/30">
-            <div class="relative w-full aspect-square rounded-lg overflow-hidden diagnostic-canvas flex items-center justify-center bg-surface-container">
-              <div id="footprint-loading-efficientnet" class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-surface-container-low text-secondary p-3 text-center">
-                <span class="material-symbols-outlined text-[24px] text-secondary">center_focus_strong</span>
-                <span class="font-label-sm text-[11px] text-secondary">Awaiting frame selection</span>
-              </div>
-              <img id="footprint-efficientnet" class="w-full h-full object-cover hidden" src="" alt="EfficientNet footprint" />
-              <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-tertiary/90 text-surface-container-lowest font-label-sm text-label-sm font-mono backdrop-blur-xs border border-white/10">EffNet-B0</span>
-            </div>
-            <div class="flex flex-col px-0.5">
-              <span id="footprint-layer-efficientnet" class="font-label-sm text-label-sm font-bold text-on-surface truncate">features[-1]</span>
-              <span id="footprint-desc-efficientnet" class="font-label-sm text-[11px] text-secondary truncate">Compound scaled MBConv attribution</span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -1062,10 +1046,10 @@
       <section class="flex flex-col gap-3">
         <div class="flex items-center justify-between px-0.5">
           <span class="font-label-md text-label-md uppercase tracking-wider text-secondary font-semibold">Inference Diagnostics</span>
-          <span class="font-label-sm text-label-sm text-secondary font-mono">Independent Model Architecture Evaluation</span>
+          <span class="font-label-sm text-label-sm text-secondary font-mono">Independent Dual-Architecture Evaluation</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           
           <!-- Card 1: DenseNet-121 -->
           <div class="flex flex-col bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-outline-variant/30 gap-3">
@@ -1132,40 +1116,6 @@
             <div class="flex items-start gap-1.5 text-on-surface-variant bg-surface-container-low/70 rounded-lg p-2">
               <span class="material-symbols-outlined text-[16px] text-primary-container flex-shrink-0 mt-0.5">center_focus_strong</span>
               <span class="font-body-sm text-body-sm"><strong class="text-on-surface font-medium">Focus:</strong> Broad lesion central bulk.</span>
-            </div>
-          </div>
-
-          <!-- Card 3: EfficientNet-B0 -->
-          <div class="flex flex-col bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-outline-variant/30 gap-3">
-            <div class="flex items-start justify-between gap-2">
-              <div class="flex flex-col min-w-0">
-                <div class="flex items-center gap-1.5">
-                  <span class="font-headline-sm text-headline-sm font-semibold text-on-surface">EfficientNet-B0</span>
-                  <span id="compare-status-badge-efficientnet" class="px-1.5 py-0.5 rounded bg-surface-container text-on-secondary-container font-label-sm text-[10px] font-mono">Lightweight</span>
-                </div>
-                <span class="font-body-sm text-body-sm text-secondary truncate">Compound scaling</span>
-              </div>
-              <div class="flex flex-col items-end flex-shrink-0 font-mono">
-                <span id="compare-conf-efficientnet" class="font-label-lg text-label-lg font-bold text-primary-container">—</span>
-                <span id="compare-pred-efficientnet" class="font-label-sm text-label-sm text-secondary">Standby</span>
-              </div>
-            </div>
-            <div class="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
-              <div id="compare-bar-efficientnet" class="h-full bg-primary-container/80 rounded-full transition-all duration-500" style="width: 0%;"></div>
-            </div>
-            <div class="grid grid-cols-2 gap-2 pt-1 font-mono">
-              <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
-                <span class="font-label-sm text-label-sm text-secondary">Target Layer</span>
-                <span id="compare-layer-efficientnet" class="font-label-md text-label-md font-semibold text-on-surface truncate">features[-1]</span>
-              </div>
-              <div class="flex flex-col bg-surface-container-low rounded-lg p-2">
-                <span class="font-label-sm text-label-sm text-secondary">Latency</span>
-                <span id="compare-lat-efficientnet" class="font-label-md text-label-md font-semibold text-on-surface">—</span>
-              </div>
-            </div>
-            <div class="flex items-start gap-1.5 text-on-surface-variant bg-surface-container-low/70 rounded-lg p-2">
-              <span class="material-symbols-outlined text-[16px] text-primary-container flex-shrink-0 mt-0.5">center_focus_strong</span>
-              <span class="font-body-sm text-body-sm"><strong class="text-on-surface font-medium">Focus:</strong> Microvascular periphery.</span>
             </div>
           </div>
         </div>

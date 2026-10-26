@@ -97,13 +97,10 @@ const elements = {
   compareCurrentFrameDesc: document.getElementById('compare-current-frame-desc'),
   footprintDensenet: document.getElementById('footprint-densenet'),
   footprintResnet: document.getElementById('footprint-resnet'),
-  footprintEfficientnet: document.getElementById('footprint-efficientnet'),
   footprintLoadingDensenet: document.getElementById('footprint-loading-densenet'),
   footprintLoadingResnet: document.getElementById('footprint-loading-resnet'),
-  footprintLoadingEfficientnet: document.getElementById('footprint-loading-efficientnet'),
   footprintLayerDensenet: document.getElementById('footprint-layer-densenet'),
   footprintLayerResnet: document.getElementById('footprint-layer-resnet'),
-  footprintLayerEfficientnet: document.getElementById('footprint-layer-efficientnet'),
   compareConfDensenet: document.getElementById('compare-conf-densenet'),
   comparePredDensenet: document.getElementById('compare-pred-densenet'),
   compareBarDensenet: document.getElementById('compare-bar-densenet'),
@@ -116,12 +113,6 @@ const elements = {
   compareLatResnet: document.getElementById('compare-lat-resnet'),
   compareLayerResnet: document.getElementById('compare-layer-resnet'),
   compareStatusBadgeResnet: document.getElementById('compare-status-badge-resnet'),
-  compareConfEfficientnet: document.getElementById('compare-conf-efficientnet'),
-  comparePredEfficientnet: document.getElementById('compare-pred-efficientnet'),
-  compareBarEfficientnet: document.getElementById('compare-bar-efficientnet'),
-  compareLatEfficientnet: document.getElementById('compare-lat-efficientnet'),
-  compareLayerEfficientnet: document.getElementById('compare-layer-efficientnet'),
-  compareStatusBadgeEfficientnet: document.getElementById('compare-status-badge-efficientnet'),
 };
 
 // ── Centralized API Base URL Configuration ─────────────────────────────────────
@@ -913,19 +904,6 @@ async function triggerMultiModelComparison() {
       layerCard: elements.compareLayerResnet,
       badge: elements.compareStatusBadgeResnet,
     },
-    {
-      key: 'efficientnet_b0',
-      name: 'EfficientNet-B0',
-      img: elements.footprintEfficientnet,
-      loading: elements.footprintLoadingEfficientnet,
-      layerFootprint: elements.footprintLayerEfficientnet,
-      conf: elements.compareConfEfficientnet,
-      pred: elements.comparePredEfficientnet,
-      bar: elements.compareBarEfficientnet,
-      lat: elements.compareLatEfficientnet,
-      layerCard: elements.compareLayerEfficientnet,
-      badge: elements.compareStatusBadgeEfficientnet,
-    },
   ];
 
   // 1. Verify frame selection
@@ -988,7 +966,7 @@ async function triggerMultiModelComparison() {
     elements.compareConsensusTitle.textContent = 'Multi-Model Inference in Progress';
   }
   if (elements.compareConsensusDesc) {
-    elements.compareConsensusDesc.textContent = 'Evaluating DenseNet-121, ResNet-50, and EfficientNet-B0 activations on the current frame...';
+    elements.compareConsensusDesc.textContent = 'Evaluating DenseNet-121 and ResNet-50 activations on the current frame...';
   }
 
   models.forEach(m => {

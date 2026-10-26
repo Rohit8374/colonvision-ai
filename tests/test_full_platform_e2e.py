@@ -150,7 +150,9 @@ def run_e2e_verification():
     assert "models" in comp
     assert comp["consensus"]["agreement_rate"] == 1.0
     assert comp["consensus"]["kappa"] == 0.94
-    assert len(comp["models"]) == 3
+    assert len(comp["models"]) == 2
+    for m_key in ["densenet121", "resnet50"]:
+        assert m_key in comp["models"]
     print(f"  [PASS] Consensus: {comp['consensus']['summary']}")
     print(f"  [PASS] Joint Concordance: kappa = {comp['consensus']['kappa']}")
     for k, v in comp["models"].items():

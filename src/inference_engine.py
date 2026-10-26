@@ -204,3 +204,4 @@ class GradCAMExtractor:
             self.model.zero_grad(set_to_none=True)
         except Exception:
             pass
+        self.model = None
