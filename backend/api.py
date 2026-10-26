@@ -134,6 +134,25 @@ async def global_exception_handler(request, exc: Exception):
         },
     )
 
+def get_current_rss_mb() -> float:
+    """Returns current process Resident Set Size (RSS) in megabytes."""
+    try:
+        import psutil
+        return round(psutil.Process().memory_info().rss / (1024 * 1024), 2)
+    except Exception:
+        return 0.0
+
+
+def trim_memory():
+    """Forces Python garbage collection and trims glibc arenas back to OS on Linux/Render."""
+    gc.collect()
+    try:
+        import ctypes
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except Exception:
+        pass
+
+
 # Global in-memory cache for models and validator
 _MODELS_CACHE: Dict[str, Any] = {}
 _VALIDATOR: Optional[EndoscopyValidator] = None
@@ -152,14 +171,13 @@ def get_cached_validator() -> EndoscopyValidator:
 def get_cached_model(model_key: str):
     global _MODELS_CACHE, _VALIDATOR
     # Release validator feature extractor to prevent holding two 100MB+ models in RAM simultaneously
-    if _VALIDATOR is not None and getattr(_VALIDATOR, "_extractor", None) is not None:
-        _VALIDATOR._extractor = None
-        gc.collect()
+    if _VALIDATOR is not None:
+        _VALIDATOR.release_extractor()
 
     if model_key not in _MODELS_CACHE:
         # Evict any other cached models to strictly enforce <=512MB RAM on Render
         _MODELS_CACHE.clear()
-        gc.collect()
+        trim_memory()
 
         checkpoint_path = MODEL_PATHS.get(model_key)
         if checkpoint_path is None or not checkpoint_path.exists():
@@ -190,10 +208,13 @@ def get_cached_model(model_key: str):
         else:
             raise RuntimeError(f"Unknown model key: {model_key}")
 
-        state_dict = torch.load(checkpoint_path, map_location=DEVICE)
+        state_dict = torch.load(checkpoint_path, map_location=DEVICE, mmap=True)
         model.load_state_dict(state_dict)
         del state_dict
         gc.collect()
+
+        for p in model.parameters():
+            p.requires_grad = False
 
         model.to(DEVICE)
         model.eval()
@@ -239,7 +260,7 @@ def compute_gradcam_and_overlay(
     target_layer = get_gradcam_target_layer(model, model_key)
     extractor = GradCAMExtractor(model, target_layer)
     cam_norm, pred_class, confidence, probs, logits = extractor.compute(
-        tensor_input, target_class=target_class
+        tensor_input, target_class=target_class, model_key=model_key
     )
     del tensor_input
     del extractor
@@ -323,6 +344,10 @@ def health_check():
         "validator": {
             "threshold": threshold,
             "profile_loaded": profile_loaded,
+        },
+        "memory": {
+            "rss_mb": get_current_rss_mb(),
+            "limit_mb": 512,
         },
     }
 
@@ -574,13 +599,19 @@ async def analyze_image(
         "overlay_uri": overlay_uri,
     }
 
-    # Record into in-memory history (last 20)
+    # Record lightweight summary into session history without keeping multi-MB image strings
     global _ANALYSIS_HISTORY
-    _ANALYSIS_HISTORY.insert(0, analysis_record)
-    if len(_ANALYSIS_HISTORY) > 20:
+    history_entry = {k: v for k, v in analysis_record.items() if k not in ("original_uri", "heatmap_uri", "overlay_uri")}
+    _ANALYSIS_HISTORY.insert(0, history_entry)
+    if len(_ANALYSIS_HISTORY) > 5:
         _ANALYSIS_HISTORY.pop()
 
-    gc.collect()
+    # Clear model weights and trim memory immediately
+    del model
+    del cam_results
+    _MODELS_CACHE.clear()
+    trim_memory()
+
     return analysis_record
 
 
@@ -591,9 +622,18 @@ async def compare_all_models(
 ):
     """
     Multi-model comparative inference:
-    Runs ResNet-50, DenseNet-121, and EfficientNet-B0 on the EXACT same frame.
-    Generates side-by-side attribution footprints, consensus agreement, and latency metrics.
+    Runs DenseNet-121 and ResNet-50 sequentially on the EXACT same frame.
+    Strictly releases memory between models to guarantee execution within 512MB RAM.
     """
+    initial_rss = get_current_rss_mb()
+    peak_rss = initial_rss
+
+    # Ensure memory is completely free before comparative run
+    _MODELS_CACHE.clear()
+    if _VALIDATOR is not None:
+        _VALIDATOR.release_extractor()
+    trim_memory()
+
     if file:
         content = await file.read()
         try:
@@ -615,30 +655,46 @@ async def compare_all_models(
     # Validate domain (Genuine OOD feature extraction on image)
     validator = get_cached_validator()
     val_res = validator.validate_image(img)
+    validator.release_extractor()
+    trim_memory()
+
     if not val_res["is_endoscopy"]:
-            return JSONResponse(
-                status_code=422,
-                content={
-                    "error": "Out-of-Domain Image Rejected",
-                    "message": f"Image failed endoscopy domain verification (Score: {val_res['domain_score']:.4f}).",
-                    "is_endoscopy": False,
-                },
-            )
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": "Out-of-Domain Image Rejected",
+                "message": f"Image failed endoscopy domain verification (Score: {val_res['domain_score']:.4f}).",
+                "is_endoscopy": False,
+            },
+        )
 
     model_keys = ["densenet121", "resnet50"]
     results = {}
     preds = []
 
-    # Ensure memory is completely free before comparative run
-    _MODELS_CACHE.clear()
-    if _VALIDATOR is not None and getattr(_VALIDATOR, "_extractor", None) is not None:
-        _VALIDATOR._extractor = None
-    gc.collect()
-
     for k in model_keys:
         t0 = time.time()
         m = None
         res = None
+        current_rss = get_current_rss_mb()
+        peak_rss = max(peak_rss, current_rss)
+
+        # Proactive memory safeguard check for 512MB container limit
+        if current_rss > 470.0:
+            results[k] = {
+                "key": k,
+                "name": MODEL_CONFIGS[k]["name"],
+                "params": MODEL_CONFIGS[k]["params"],
+                "prediction": "Evaluation Safeguarded",
+                "confidence": 0.0,
+                "confidence_pct": "—",
+                "latency_ms": 0.0,
+                "attribution_layer": gradcam_layer_label(k),
+                "error": f"Memory limit safeguard active ({current_rss} MB / 512 MB ceiling). Architecture deferred to preserve service stability.",
+                "status": "error",
+            }
+            continue
+
         try:
             m = get_cached_model(k)
             res = compute_gradcam_and_overlay(
@@ -705,7 +761,8 @@ async def compare_all_models(
             del m
             del res
             _MODELS_CACHE.clear()
-            gc.collect()
+            trim_memory()
+            peak_rss = max(peak_rss, get_current_rss_mb())
 
     # Consensus calculation for 2-model comparative evaluation (DenseNet-121 vs ResNet-50)
     total_valid = len(preds)
@@ -730,7 +787,7 @@ async def compare_all_models(
             kappa = 0.50
     elif total_valid == 1:
         single_pred = "Colorectal Carcinoma" if preds[0] == "colorectal_cancer" else "Colon Diverticula"
-        consensus_text = f"Single model evaluated successfully ({single_pred}); companion architecture encountered an error."
+        consensus_text = f"Single model evaluated successfully ({single_pred}); companion architecture encountered an error or memory constraint."
         agreement_rate = 0.5
         consensus_class = single_pred
         kappa = 0.0
@@ -740,7 +797,7 @@ async def compare_all_models(
         consensus_text = "Comparative evaluation could not be completed for the requested architectures."
         kappa = 0.0
 
-    gc.collect()
+    trim_memory()
     return {
         "consensus": {
             "agreement_rate": agreement_rate,
@@ -749,6 +806,12 @@ async def compare_all_models(
             "kappa": kappa,
         },
         "models": results,
+        "memory_diagnostics": {
+            "initial_rss_mb": initial_rss,
+            "peak_rss_mb": round(peak_rss, 2),
+            "final_rss_mb": get_current_rss_mb(),
+            "limit_mb": 512,
+        },
     }
 
 

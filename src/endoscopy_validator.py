@@ -85,7 +85,7 @@ def get_feature_extractor():
 
     if local_ckpt:
         base_model = models.resnet50(weights=None)
-        state_dict = torch.load(local_ckpt, map_location="cpu")
+        state_dict = torch.load(local_ckpt, map_location="cpu", mmap=True)
         base_model.load_state_dict(state_dict)
         del state_dict
         gc.collect()
@@ -98,7 +98,7 @@ def get_feature_extractor():
             resnet_ckpt = MODELS_DIR / "resnet50_best.pth"
             if resnet_ckpt.exists():
                 try:
-                    state_dict = torch.load(resnet_ckpt, map_location="cpu")
+                    state_dict = torch.load(resnet_ckpt, map_location="cpu", mmap=True)
                     backbone_dict = {k: v for k, v in state_dict.items() if not k.startswith("fc.")}
                     base_model.load_state_dict(backbone_dict, strict=False)
                     del state_dict
@@ -112,6 +112,8 @@ def get_feature_extractor():
     # Remove final classification linear layer, retain pooling -> 2048-dim embedding
     feature_extractor = nn.Sequential(*list(base_model.children())[:-1], nn.Flatten())
     feature_extractor.eval()
+    for param in feature_extractor.parameters():
+        param.requires_grad = False
     del base_model
     gc.collect()
     return feature_extractor
@@ -138,6 +140,7 @@ def extract_embedding_from_pil(pil_img: Image.Image, extractor: nn.Module) -> np
     tensor = eval_transform(rgb_img).unsqueeze(0).to(DEVICE)
     with torch.inference_mode():
         feat = extractor(tensor).squeeze().cpu().numpy()
+    del tensor
     norm = np.linalg.norm(feat)
     if norm > 1e-8:
         return feat / norm
@@ -522,37 +525,45 @@ class EndoscopyValidator:
     def extractor(self, value: nn.Module):
         self._extractor = value
 
-    def validate_image(self, pil_image: Image.Image) -> dict:
+    def release_extractor(self):
+        """Immediately releases extractor backbone and frees resident memory."""
+        if self._extractor is not None:
+            del self._extractor
+            self._extractor = None
+            gc.collect()
+            try:
+                import ctypes
+                ctypes.CDLL("libc.so.6").malloc_trim(0)
+            except Exception:
+                pass
+
+    def validate_image(self, pil_image: Image.Image, auto_release: bool = True) -> dict:
         """
         Validates whether a PIL image belongs to the endoscopy domain.
-        Returns:
-            {
-                "is_endoscopy": bool,
-                "domain_score": float,
-                "threshold": float,
-                "margin": float,
-                "status_message": str,
-            }
+        Releases the ResNet feature extractor immediately upon completion
+        to prevent holding ~100MB+ in memory during subsequent model execution.
         """
-        emb = extract_embedding_from_pil(pil_image, self.extractor)
-        score = float(np.dot(emb, self.centroid))
-        is_endoscopy = score >= self.threshold
-        margin = score - self.threshold
+        try:
+            emb = extract_embedding_from_pil(pil_image, self.extractor)
+            score = float(np.dot(emb, self.centroid))
+            is_endoscopy = score >= self.threshold
+            margin = score - self.threshold
 
-        # Extractor is kept cached in memory in bfloat16 (~48MB) for sub-second responses
+            if is_endoscopy:
+                msg = "Valid Endoscopy Image (Domain match verified)"
+            else:
+                msg = "Unsupported Image: Visual features do not match endoscopic domain characteristics."
 
-        if is_endoscopy:
-            msg = "Valid Endoscopy Image (Domain match verified)"
-        else:
-            msg = "Unsupported Image: Visual features do not match endoscopic domain characteristics."
-
-        return {
-            "is_endoscopy": is_endoscopy,
-            "domain_score": round(score, 4),
-            "threshold": round(self.threshold, 4),
-            "margin": round(margin, 4),
-            "status_message": msg,
-        }
+            return {
+                "is_endoscopy": is_endoscopy,
+                "domain_score": round(score, 4),
+                "threshold": round(self.threshold, 4),
+                "margin": round(margin, 4),
+                "status_message": msg,
+            }
+        finally:
+            if auto_release:
+                self.release_extractor()
 
 
 if __name__ == "__main__":

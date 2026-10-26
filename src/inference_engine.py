@@ -99,13 +99,27 @@ def load_backbone(model_key: str) -> Tuple[Optional[nn.Module], Optional[str]]:
         else:
             return None, f"Unknown model key: {model_key}"
 
-        state_dict = torch.load(checkpoint_path, map_location=DEVICE)
+        state_dict = torch.load(checkpoint_path, map_location=DEVICE, mmap=True)
         model.load_state_dict(state_dict)
+        del state_dict
+        gc.collect()
+        for p in model.parameters():
+            p.requires_grad = False
         model.to(DEVICE)
         model.eval()
         return model, None
     except Exception as e:
         return None, f"Failed to initialize model {model_key}: {str(e)}"
+
+
+def trim_memory():
+    """Forces garbage collection and releases glibc arena memory to OS on Linux/Render."""
+    gc.collect()
+    try:
+        import ctypes
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except Exception:
+        pass
 
 
 def get_gradcam_target_layer(model: nn.Module, model_key: str) -> nn.Module:
@@ -141,34 +155,72 @@ class GradCAMExtractor:
 
     def _register_hooks(self):
         def forward_hook(module, input, output):
-            self.activations = output.clone() if isinstance(output, torch.Tensor) else output
+            self.activations = output if isinstance(output, torch.Tensor) else output[0]
 
         def backward_hook(module, grad_in, grad_out):
-            self.gradients = grad_out[0].clone() if isinstance(grad_out[0], torch.Tensor) else grad_out[0]
+            self.gradients = grad_out[0] if isinstance(grad_out[0], torch.Tensor) else grad_out[0]
 
         h1 = self.target_layer.register_forward_hook(forward_hook)
         h2 = self.target_layer.register_full_backward_hook(backward_hook)
         self.hook_handles.extend([h1, h2])
 
-    def compute(self, input_tensor: torch.Tensor, target_class: Optional[int] = None):
+    def _forward_head(self, model_key: str, act: torch.Tensor) -> Optional[torch.Tensor]:
+        if model_key == "resnet50":
+            return self.model.fc(torch.flatten(self.model.avgpool(act), 1))
+        elif model_key == "densenet121":
+            norm = self.model.features.norm5(act)
+            relu = torch.relu(norm)
+            pooled = torch.nn.functional.adaptive_avg_pool2d(relu, (1, 1))
+            return self.model.classifier(torch.flatten(pooled, 1))
+        elif model_key == "efficientnet_b0":
+            return self.model.classifier(torch.flatten(self.model.avgpool(act), 1))
+        return None
+
+    def compute(
+        self,
+        input_tensor: torch.Tensor,
+        target_class: Optional[int] = None,
+        model_key: Optional[str] = None,
+    ):
         try:
             self.model.eval()
-            self.model.zero_grad()
+            self.model.zero_grad(set_to_none=True)
 
-            logits = self.model(input_tensor)
-            probs = torch.softmax(logits, dim=1)
+            # Ultra-low-memory path: evaluate forward pass under no_grad to eliminate
+            # PyTorch backward graph retention for the 50-120 backbone layers
+            if model_key in ("resnet50", "densenet121", "efficientnet_b0"):
+                with torch.no_grad():
+                    logits = self.model(input_tensor)
+                probs = torch.softmax(logits, dim=1)
+                pred_class = int(logits.argmax(dim=1).item())
+                confidence = float(probs[0, pred_class].item())
 
-            pred_class = int(logits.argmax(dim=1).item())
-            confidence = float(probs[0, pred_class].item())
+                if target_class is None:
+                    target_class = pred_class
 
-            if target_class is None:
-                target_class = pred_class
+                act_tensor = self.activations.detach().clone().requires_grad_(True)
+                head_logits = self._forward_head(model_key, act_tensor)
+                target_score = head_logits[0, target_class]
+                target_score.backward()
 
-            target_score = logits[0, target_class]
-            target_score.backward()
+                grads = act_tensor.grad.detach()
+                acts = self.activations.detach()
+                del act_tensor, head_logits
+            else:
+                # Standard backward pass fallback
+                logits = self.model(input_tensor)
+                probs = torch.softmax(logits, dim=1)
+                pred_class = int(logits.argmax(dim=1).item())
+                confidence = float(probs[0, pred_class].item())
 
-            grads = self.gradients.detach()
-            acts = self.activations.detach()
+                if target_class is None:
+                    target_class = pred_class
+
+                target_score = logits[0, target_class]
+                target_score.backward()
+
+                grads = self.gradients.detach()
+                acts = self.activations.detach()
 
             weights = torch.mean(grads, dim=(2, 3), keepdim=True)
             cam = torch.sum(weights * acts, dim=1, keepdim=True)
@@ -181,6 +233,7 @@ class GradCAMExtractor:
             else:
                 cam_norm = np.zeros_like(cam_np)
 
+            del weights, cam, grads, acts
             return (
                 cam_norm,
                 pred_class,
