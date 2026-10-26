@@ -8,7 +8,6 @@ __pycache__
 *.pyo
 backend/
 app/
-src/
 models/
 data/
 notebooks/
