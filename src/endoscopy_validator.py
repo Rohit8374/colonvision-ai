@@ -85,8 +85,10 @@ def get_feature_extractor():
 
     if local_ckpt:
         base_model = models.resnet50(weights=None)
-        state_dict = torch.load(local_ckpt, map_location="cpu", mmap=True)
+        state_dict = torch.load(local_ckpt, map_location="cpu")
         base_model.load_state_dict(state_dict)
+        del state_dict
+        gc.collect()
     else:
         try:
             base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
@@ -96,9 +98,12 @@ def get_feature_extractor():
             resnet_ckpt = MODELS_DIR / "resnet50_best.pth"
             if resnet_ckpt.exists():
                 try:
-                    state_dict = torch.load(resnet_ckpt, map_location="cpu", mmap=True)
+                    state_dict = torch.load(resnet_ckpt, map_location="cpu")
                     backbone_dict = {k: v for k, v in state_dict.items() if not k.startswith("fc.")}
                     base_model.load_state_dict(backbone_dict, strict=False)
+                    del state_dict
+                    del backbone_dict
+                    gc.collect()
                     print(f"[OK] Fallback feature extractor initialized from {resnet_ckpt.name}")
                 except Exception as le:
                     print(f"[WARN] Could not load state_dict into fallback model: {le}")
@@ -106,10 +111,9 @@ def get_feature_extractor():
     base_model.to(DEVICE)
     # Remove final classification linear layer, retain pooling -> 2048-dim embedding
     feature_extractor = nn.Sequential(*list(base_model.children())[:-1], nn.Flatten())
-    try:
-        feature_extractor = feature_extractor.to(torch.bfloat16)
-    except Exception:
-        pass
+    feature_extractor.eval()
+    del base_model
+    gc.collect()
     return feature_extractor
 
 
@@ -118,7 +122,7 @@ def extract_embedding(img_path: Path, extractor: nn.Module) -> np.ndarray:
         with Image.open(img_path) as img:
             rgb_img = img.convert("RGB")
             tensor = eval_transform(rgb_img).unsqueeze(0).to(DEVICE)
-            with torch.no_grad():
+            with torch.inference_mode():
                 feat = extractor(tensor).squeeze().cpu().numpy()
             norm = np.linalg.norm(feat)
             if norm > 1e-8:
@@ -132,14 +136,8 @@ def extract_embedding(img_path: Path, extractor: nn.Module) -> np.ndarray:
 def extract_embedding_from_pil(pil_img: Image.Image, extractor: nn.Module) -> np.ndarray:
     rgb_img = pil_img.convert("RGB")
     tensor = eval_transform(rgb_img).unsqueeze(0).to(DEVICE)
-    try:
-        extractor_b16 = extractor.to(torch.bfloat16)
-        tensor_b16 = tensor.to(torch.bfloat16)
-        with torch.inference_mode():
-            feat = extractor_b16(tensor_b16).squeeze().to(torch.float32).cpu().numpy()
-    except Exception:
-        with torch.inference_mode():
-            feat = extractor(tensor).squeeze().cpu().numpy()
+    with torch.inference_mode():
+        feat = extractor(tensor).squeeze().cpu().numpy()
     norm = np.linalg.norm(feat)
     if norm > 1e-8:
         return feat / norm

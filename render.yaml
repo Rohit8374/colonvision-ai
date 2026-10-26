@@ -12,3 +12,5 @@ services:
         value: 3.11.9
       - key: TORCH_HOME
         value: /opt/render/project/src/.torch_cache
+      - key: FRONTEND_ORIGINS
+        value: https://colonvision-ai.vercel.app

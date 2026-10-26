@@ -1,0 +1,21 @@
+# Exclude Python backend and heavy research assets from Vercel frontend build
+.git
+.venv
+venv
+env
+__pycache__
+*.pyc
+*.pyo
+backend/
+app/
+src/
+models/
+data/
+notebooks/
+results/
+tests/
+.torch_cache/
+.pytest_cache/
+run.py
+requirements.txt
+render.yaml

@@ -124,22 +124,57 @@ const elements = {
   compareStatusBadgeEfficientnet: document.getElementById('compare-status-badge-efficientnet'),
 };
 
+// ── Centralized API Base URL Configuration ─────────────────────────────────────
+// In local development, empty VITE_API_BASE_URL delegates to Vite dev server proxy (/api -> :8000).
+// In Vercel deployment, VITE_API_BASE_URL points directly to Render (https://colonvision-ai.onrender.com).
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
+
+/**
+ * Resolves an API path or image URL against the configured backend base URL.
+ * Handles relative paths ('/api/...'), absolute URLs ('https://...'), and data URIs safely.
+ */
+function apiUrl(path) {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path) || path.startsWith('data:')) {
+    return path;
+  }
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return API_BASE_URL ? `${API_BASE_URL}${cleanPath}` : cleanPath;
+}
+
 /**
  * Safely executes an API request with strict HTTP status and content-type validation.
+ * Resolves endpoints against the centralized API base URL (VITE_API_BASE_URL).
  * Prevents "Unexpected token '<', '<!DOCTYPE '... is not valid JSON" parsing syntax errors
  * by validating that the response is genuine JSON before calling res.json().
  *
  * If the response fails or returns non-JSON (e.g. 502/504 Bad Gateway, 404, or SPA redirect),
  * this helper extracts meaningful clinical/server error information without masking genuine PyTorch errors.
  */
-async function safeApiRequest(url, options = {}) {
+async function safeApiRequest(endpoint, options = {}) {
+  const url = apiUrl(endpoint);
+  const timeoutMs = options.timeoutMs || 60000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const signal = options.signal || controller.signal;
+
   let res;
   try {
-    res = await fetch(url, options);
+    res = await fetch(url, { ...options, signal });
   } catch (networkErr) {
+    clearTimeout(timeoutId);
+    if (networkErr.name === 'AbortError') {
+      const err = new Error(
+        `Request to ${url} timed out after ${timeoutMs / 1000}s. The Render free-tier backend may be warming up from cold-start; please allow 15 seconds and retry.`
+      );
+      err.errorType = 'Gateway Timeout';
+      throw err;
+    }
     const err = new Error(`Network connection error: Unable to reach PyTorch backend at ${url}. ${networkErr.message}`);
     err.errorType = 'Connection Error';
     throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   const contentType = res.headers.get('content-type') || '';
@@ -166,7 +201,7 @@ async function safeApiRequest(url, options = {}) {
       if (res.status === 502 || res.status === 504) {
         helpfulMsg = `PyTorch backend service is currently warming up or temporarily unavailable (HTTP ${res.status}). Please allow 10-15 seconds and try again.`;
       } else if (res.status === 404) {
-        helpfulMsg = `The requested endpoint '${url}' was not found (HTTP 404). Ensure same-origin /api routes are routed to the FastAPI backend.`;
+        helpfulMsg = `The requested endpoint '${url}' was not found (HTTP 404). Ensure backend base URL points to the active FastAPI server.`;
       } else if (rawText && !rawText.includes('<!DOCTYPE') && rawText.length < 200) {
         helpfulMsg += `: ${rawText.trim()}`;
       }
@@ -340,7 +375,8 @@ async function applySample(sampleId) {
   }
 
   // Prefer direct HTTP image URL on deployed domain, fallback to base64
-  const imageSrc = sample.image_url || sample.static_url || sample.data_uri || `/api/samples/image/${sampleId}`;
+  const rawImageSrc = sample.image_url || sample.static_url || sample.data_uri || `/api/samples/image/${sampleId}`;
+  const imageSrc = apiUrl(rawImageSrc);
   elements.workspacePreviewImg.src = imageSrc;
   elements.workspaceFilename.textContent = sample.filename || `${sampleId}.jpg`;
   elements.workspaceDim.textContent = sample.dimensions || '—';
@@ -814,7 +850,7 @@ async function downloadPdfReport() {
       overlay_uri: state.lastAnalysis.overlay_uri,
     };
 
-    const res = await fetch('/api/report', {
+    const res = await fetch(apiUrl('/api/report'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

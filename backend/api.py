@@ -68,10 +68,26 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# Enable CORS for local Vite and static frontends
+# Configure CORS for local development and Vercel production/preview deployments
+frontend_origins_raw = os.environ.get("FRONTEND_ORIGINS", "")
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+if frontend_origins_raw:
+    for o in frontend_origins_raw.split(","):
+        clean_origin = o.strip().rstrip("/")
+        if clean_origin and clean_origin not in allowed_origins:
+            allowed_origins.append(clean_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"^https://.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -134,7 +150,12 @@ def get_cached_validator() -> EndoscopyValidator:
 
 
 def get_cached_model(model_key: str):
-    global _MODELS_CACHE
+    global _MODELS_CACHE, _VALIDATOR
+    # Release validator feature extractor to prevent holding two 100MB+ models in RAM simultaneously
+    if _VALIDATOR is not None and getattr(_VALIDATOR, "_extractor", None) is not None:
+        _VALIDATOR._extractor = None
+        gc.collect()
+
     if model_key not in _MODELS_CACHE:
         # Evict any other cached models to strictly enforce <=512MB RAM on Render
         _MODELS_CACHE.clear()
@@ -169,8 +190,11 @@ def get_cached_model(model_key: str):
         else:
             raise RuntimeError(f"Unknown model key: {model_key}")
 
-        state_dict = torch.load(checkpoint_path, map_location=DEVICE, mmap=True)
+        state_dict = torch.load(checkpoint_path, map_location=DEVICE)
         model.load_state_dict(state_dict)
+        del state_dict
+        gc.collect()
+
         model.to(DEVICE)
         model.eval()
         _MODELS_CACHE[model_key] = model
@@ -403,9 +427,8 @@ async def validate_image(
 ):
     """
     Run OOD Endoscopy Validator protection check on submitted image.
+    Performs genuine ResNet-50 feature manifold validation against the calibrated GastroVision centroid.
     """
-    validator = get_cached_validator()
-
     if file:
         content = await file.read()
         try:
@@ -413,7 +436,8 @@ async def validate_image(
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid image format: {str(e)}")
     elif sample_id and sample_id not in ("null", "undefined", ""):
-        sample_path = SAMPLES_DIR / f"sample_{'colorectal_cancer' if sample_id == 'cancer' else 'colon_diverticula'}.jpg"
+        sample_filename = "sample_colorectal_cancer.jpg" if sample_id == "cancer" else "sample_colon_diverticula.jpg"
+        sample_path = SAMPLES_DIR / sample_filename
         if not sample_path.exists():
             raise HTTPException(
                 status_code=404,
@@ -423,6 +447,7 @@ async def validate_image(
     else:
         raise HTTPException(status_code=400, detail="No file or sample_id provided")
 
+    validator = get_cached_validator()
     val_res = validator.validate_image(img)
     return {
         "is_endoscopy": bool(val_res["is_endoscopy"]),
@@ -476,17 +501,12 @@ async def analyze_image(
     else:
         raise HTTPException(status_code=400, detail="Must provide an image file or sample_id")
 
-    # Step 1: Validate Domain (Benchmark samples are pre-verified endoscopy frames)
-    if file:
-        validator = get_cached_validator()
-        val_res = validator.validate_image(img)
-        is_endo = bool(val_res["is_endoscopy"])
-        domain_score = float(val_res["domain_score"])
-        threshold = float(val_res["threshold"])
-    else:
-        is_endo = True
-        threshold = 0.50
-        domain_score = 0.8106 if sample_id == "cancer" else 0.8608
+    # Step 1: Validate Domain (Genuine OOD feature extraction on image)
+    validator = get_cached_validator()
+    val_res = validator.validate_image(img)
+    is_endo = bool(val_res["is_endoscopy"])
+    domain_score = float(val_res["domain_score"])
+    threshold = float(val_res["threshold"])
 
     if not is_endo:
         return JSONResponse(
@@ -590,11 +610,10 @@ async def compare_all_models(
     else:
         raise HTTPException(status_code=400, detail="No file or sample_id provided")
 
-    # Validate domain on uploaded custom files; benchmark samples are pre-verified
-    if file:
-        validator = get_cached_validator()
-        val_res = validator.validate_image(img)
-        if not val_res["is_endoscopy"]:
+    # Validate domain (Genuine OOD feature extraction on image)
+    validator = get_cached_validator()
+    val_res = validator.validate_image(img)
+    if not val_res["is_endoscopy"]:
             return JSONResponse(
                 status_code=422,
                 content={
